@@ -2,7 +2,8 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
-import { MoreHorizontal, ArrowUpDown } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Eye } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -15,6 +16,46 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { InventoryItem } from "@/lib/types"
+
+const ActionsCell = ({ row, table }: { row: any, table: any }) => {
+  const item = row.original as InventoryItem;
+  const router = useRouter();
+
+  return (
+    <div className="text-right">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => router.push(`/inventory/${item.id}`)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View Logs
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(item.id)}>
+            Copy item ID
+          </DropdownMenuItem>
+          <DropdownMenuItem>Generate QR Code</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(item)}>
+            Edit item
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            onClick={() => table.options.meta?.openDeleteDialog?.(item)}
+          >
+            Delete item
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};
+
 
 export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   {
@@ -32,8 +73,9 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
     },
     cell: ({ row }) => {
       const item = row.original
+      const router = useRouter();
       return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={() => router.push(`/inventory/${item.id}`)}>
           <Image
             src={item.imageUrl}
             alt={item.name}
@@ -79,38 +121,6 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   },
   {
     id: "actions",
-    cell: ({ row, table }) => {
-      const item = row.original
-
-      return (
-        <div className="text-right">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(item.id)}>
-                Copy item ID
-              </DropdownMenuItem>
-              <DropdownMenuItem>Generate QR Code</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(item)}>
-                Edit item
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={() => table.options.meta?.openDeleteDialog?.(item)}
-              >
-                Delete item
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )
-    },
+    cell: ActionsCell,
   },
 ]

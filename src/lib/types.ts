@@ -29,6 +29,19 @@ export type LogEntry = {
   details: string;
 };
 
+export type ItemTransaction = {
+  id: string;
+  timestamp: string;
+  type: 'borrow' | 'return';
+  quantity: number;
+  borrowerName?: string;
+  returnDate?: string;
+  notes?: string;
+  reminder: boolean;
+  adminName: string;
+  adminAvatar: string;
+}
+
 // Re-exporting AI types to be used in client components
 export type {
   ValidateDescriptionConsistencyInput,
