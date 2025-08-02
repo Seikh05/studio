@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ItemForm } from "./item-form"
 import type { InventoryItem } from "@/lib/types"
+import { Card } from "@/components/ui/card"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
