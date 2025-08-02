@@ -27,29 +27,6 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-// This is a mock function to simulate uploading to a service like Cloudinary
-// In a real app, this would make a network request.
-const uploadImageToCloud = async (file: File): Promise<string> => {
-    // We'll use Cloudinary's free tier for this demo.
-    // This is a *client-side* upload, which is okay for a demo but in production
-    // you would want to use a signed upload from your backend for security.
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', 'ml_default'); // replace with your own preset
-
-    const response = await fetch('https://api.cloudinary.com/v1_1/diqgquom2/image/upload', { // replace with your own cloud name
-        method: 'POST',
-        body: formData,
-    });
-
-    if (!response.ok) {
-        throw new Error('Image upload failed');
-    }
-
-    const data = await response.json();
-    return data.secure_url;
-};
-
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -95,27 +72,28 @@ export default function ProfilePage() {
 
   const avatarPreview = watch('avatarUrl');
 
-  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+      const reader = new FileReader();
       setIsUploading(true);
-      try {
-        const imageUrl = await uploadImageToCloud(file);
-        setValue('avatarUrl', imageUrl, { shouldValidate: true, shouldDirty: true });
-        toast({
-            title: 'Image Uploaded',
+      reader.onloadend = () => {
+        setValue('avatarUrl', reader.result as string, { shouldValidate: true, shouldDirty: true });
+        setIsUploading(false);
+         toast({
+            title: 'Image Ready',
             description: 'Your new profile picture is ready to be saved.',
         });
-      } catch (error) {
-        console.error("Image upload error", error);
+      };
+      reader.onerror = () => {
+        setIsUploading(false);
         toast({
             variant: 'destructive',
-            title: 'Upload Failed',
-            description: 'There was an error uploading your image.',
+            title: 'Read Failed',
+            description: 'There was an error reading the image file.',
         })
-      } finally {
-        setIsUploading(false);
       }
+      reader.readAsDataURL(file);
     }
   };
 
@@ -263,4 +241,3 @@ export default function ProfilePage() {
     </Card>
   );
 }
-
