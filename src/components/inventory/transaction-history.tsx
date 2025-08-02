@@ -1,9 +1,10 @@
 
+
 'use client'
 
 import * as React from 'react'
 import { format, formatRelative } from 'date-fns'
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Bell, Calendar, Undo2 } from 'lucide-react'
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Bell, Calendar, Undo2, User } from 'lucide-react'
 import type { ItemTransaction } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
@@ -35,8 +36,15 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
     const byAdmin = `by ${transaction.adminName}`;
     if (transaction.type === 'borrow') {
       let title = `Borrowed by ${transaction.borrowerName}`;
+      if(transaction.borrowerRegdNum) {
+        title += ` (${transaction.borrowerRegdNum})`
+      }
+
       if (transaction.itemName) {
         title = `${transaction.itemName} borrowed by ${transaction.borrowerName}`
+        if(transaction.borrowerRegdNum) {
+          title += ` (${transaction.borrowerRegdNum})`
+        }
       }
       return `${title} (approved ${byAdmin})`;
     }

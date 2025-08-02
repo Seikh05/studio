@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,6 +23,7 @@ const formSchema = z.object({
   type: z.enum(['borrow', 'return'], { required_error: 'You must select a transaction type.' }),
   quantity: z.coerce.number().min(1, 'Quantity must be at least 1.'),
   borrowerName: z.string().optional(),
+  borrowerRegdNum: z.string().optional(),
   returnDate: z.date().optional(),
   notes: z.string().optional(),
   reminder: z.boolean().default(false),
@@ -33,7 +35,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar' | 'returned'>) => void;
+  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'returned'>) => void;
 }
 
 export function TransactionForm({ onSubmit }: TransactionFormProps) {
@@ -45,6 +47,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             type: 'borrow',
             quantity: 1,
             borrowerName: '',
+            borrowerRegdNum: '',
             notes: '',
             reminder: false,
         },
@@ -97,7 +100,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 />
                 
                 <div className="grid sm:grid-cols-2 gap-4">
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="quantity"
                         render={({ field }) => (
@@ -111,6 +114,46 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                         )}
                     />
                     {transactionType === 'borrow' && (
+                       <FormField
+                            control={form.control}
+                            name="returnDate"
+                            render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Expected Return Date</FormLabel>
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <FormControl>
+                                                <Button
+                                                    variant={'outline'}
+                                                    className={cn(
+                                                        'w-full pl-3 text-left font-normal',
+                                                        !field.value && 'text-muted-foreground'
+                                                    )}
+                                                >
+                                                    {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
+                                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                                </Button>
+                                            </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                disabled={(date) => date < new Date() || date < new Date('1900-01-01')}
+                                                initialFocus
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    )}
+                </div>
+
+                {transactionType === 'borrow' && (
+                    <div className="grid sm:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
                             name="borrowerName"
@@ -124,45 +167,20 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                 </FormItem>
                             )}
                         />
-                    )}
-                </div>
-
-                {transactionType === 'borrow' && (
-                    <FormField
-                        control={form.control}
-                        name="returnDate"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Expected Return Date</FormLabel>
-                                <Popover>
-                                    <PopoverTrigger asChild>
-                                        <FormControl>
-                                            <Button
-                                                variant={'outline'}
-                                                className={cn(
-                                                    'w-full pl-3 text-left font-normal',
-                                                    !field.value && 'text-muted-foreground'
-                                                )}
-                                            >
-                                                {field.value ? format(field.value, 'PPP') : <span>Pick a date</span>}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                            </Button>
-                                        </FormControl>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            disabled={(date) => date < new Date() || date < new Date('1900-01-01')}
-                                            initialFocus
-                                        />
-                                    </PopoverContent>
-                                </Popover>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                         <FormField
+                            control={form.control}
+                            name="borrowerRegdNum"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Regd. Number (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="e.g. 21051234" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                 )}
                  <FormField
                     control={form.control}

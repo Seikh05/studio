@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -182,10 +183,10 @@ export default function ItemLogPage() {
     };
 
     // Mark the original borrow transaction as returned
-    const updatedTransactionList = transactions.map(t => t.id === transactionToReturn.id ? { ...t, returned: true } : t);
+    const updatedOldTransactions = transactions.map(t => t.id === transactionToReturn.id ? { ...t, returned: true } : t);
     
     // Add the new return transaction and slice to maintain the limit
-    const finalTransactions = [returnTransaction, ...updatedTransactionList].slice(0, MAX_TRANSACTIONS_PER_ITEM);
+    const finalTransactions = [returnTransaction, ...updatedOldTransactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(finalTransactions, updatedItem);
 
@@ -326,4 +327,3 @@ export default function ItemLogPage() {
     </>
   );
 }
-

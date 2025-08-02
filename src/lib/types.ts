@@ -1,3 +1,4 @@
+
 export type InventoryItem = {
   id: string;
   name: string;
@@ -34,11 +35,11 @@ export type ItemTransaction = {
   type: 'borrow' | 'return';
   quantity: number;
   borrowerName?: string;
+  borrowerRegdNum?: string;
   returnDate?: string;
   notes?: string;
   reminder: boolean;
   adminName: string;
-  adminAvatar?: string;
   returned?: boolean;
   itemName?: string;
 }
