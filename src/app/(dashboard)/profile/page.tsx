@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle, UploadCloud } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const USER_STORAGE_KEY = 'user-data';
@@ -26,6 +27,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = React.useState<User | null>(null);
   const [isClient, setIsClient] = React.useState(false);
@@ -184,7 +186,10 @@ export default function ProfilePage() {
             )}
            />
           
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => router.back()}>
+              Back
+            </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
