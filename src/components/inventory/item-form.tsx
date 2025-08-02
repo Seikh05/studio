@@ -42,6 +42,7 @@ const formSchema = z.object({
   category: z.string().min(1, "Category is required."),
   stock: z.coerce.number().min(0, "Stock can't be negative."),
   description: z.string().min(10, "Description must be at least 10 characters long."),
+  imageUrl: z.string().url("Invalid image URL").optional().or(z.literal('')),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -50,7 +51,7 @@ interface ItemFormProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
   item: InventoryItem | null,
-  onSave: (data: FormData) => void
+  onSave: (data: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => void
 }
 
 export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) {
@@ -58,7 +59,6 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
   const [isPending, startTransition] = useTransition()
   const [isAiValidating, setIsAiValidating] = useState(false)
   const [aiValidationResult, setAiValidationResult] = useState<ValidateDescriptionConsistencyOutput | null>(null)
-  const [imagePreview, setImagePreview] = useState<string | null>(item?.imageUrl ?? null)
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -67,8 +67,11 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
       category: "",
       stock: 0,
       description: "",
+      imageUrl: "",
     },
   })
+
+  const imagePreview = form.watch("imageUrl");
   
   useEffect(() => {
     if (isOpen) {
@@ -78,16 +81,16 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
             category: item.category,
             stock: item.stock,
             description: item.description,
+            imageUrl: item.imageUrl,
         })
-        setImagePreview(item.imageUrl)
         } else {
         form.reset({
             name: "",
             category: "",
             stock: 0,
             description: "",
+            imageUrl: "",
         })
-        setImagePreview(null)
         }
         setAiValidationResult(null)
     }
@@ -128,13 +131,16 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      setImagePreview(URL.createObjectURL(file));
+      form.setValue('imageUrl', URL.createObjectURL(file), { shouldValidate: true });
     }
   };
 
   const onSubmit = (values: FormData) => {
     startTransition(() => {
-      onSave(values)
+      onSave({
+        ...values,
+        imageUrl: values.imageUrl || 'https://placehold.co/80x80.png'
+      })
     })
   }
   
@@ -161,7 +167,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
                           variant="destructive"
                           size="icon"
                           className="absolute top-2 right-2 h-6 w-6 rounded-full"
-                          onClick={() => setImagePreview(null)}
+                          onClick={() => form.setValue('imageUrl', '')}
                         >
                            <X className="h-4 w-4" />
                         </Button>

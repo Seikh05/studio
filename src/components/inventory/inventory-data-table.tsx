@@ -105,7 +105,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     setIsFormOpen(true)
   }
   
-  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status' | 'imageUrl'>) => {
+  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
     // This is a client-side only implementation.
     // In a real app, you'd call an API to save the data.
     if (selectedItem) {
@@ -129,7 +129,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         ...formData,
         stock: Number(formData.stock),
         status: Number(formData.stock) > 0 ? (Number(formData.stock) < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
-        imageUrl: 'https://placehold.co/80x80.png',
         lastUpdated: new Date().toISOString(),
       }
       setData([...data, newItem as TData]);
