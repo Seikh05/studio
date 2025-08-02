@@ -72,7 +72,10 @@ export function LoginForm() {
       // or it matches the password set in the user form (for new users).
       if (user && (user.password === values.password || values.password === 'password')) {
         try {
-            window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(user));
+            // Create a session object without the password
+            const sessionUser = { ...user };
+            delete sessionUser.password;
+            window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
         } catch (error) {
             console.error("Failed to save user session", error);
         }
