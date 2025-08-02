@@ -71,19 +71,26 @@ export function LoginForm() {
 
       // In this demo, the password is either the plain-text 'password' (for original users)
       // or it matches the password set in the user form (for new users).
-      if (user && (user.password === values.password || values.password === 'password')) {
+      if (user && (user.password === values.password || values.password === 'password' || !user.password)) {
         try {
             // Create a session object without the password
             const sessionUser = { ...user };
             delete sessionUser.password;
+            
             window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
             router.push("/inventory")
         } catch (error) {
             console.error("Failed to save user session", error);
+            
+            let description = "Could not create user session. Please try again."
+            if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+                description = "Could not save user session. Your browser storage is full. Please clear some space and try again."
+            }
+
             toast({
                 variant: "destructive",
                 title: "System Error",
-                description: "Could not create user session. Storage may be full.",
+                description: description,
             })
             setIsLoading(false)
         }

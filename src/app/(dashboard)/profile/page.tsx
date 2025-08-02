@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -26,12 +27,37 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+// This is a mock function to simulate uploading to a service like Cloudinary
+// In a real app, this would make a network request.
+const uploadImageToCloud = async (file: File): Promise<string> => {
+    // We'll use Cloudinary's free tier for this demo.
+    // This is a *client-side* upload, which is okay for a demo but in production
+    // you would want to use a signed upload from your backend for security.
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', 'ml_default'); // replace with your own preset
+
+    const response = await fetch('https://api.cloudinary.com/v1_1/diqgquom2/image/upload', { // replace with your own cloud name
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        throw new Error('Image upload failed');
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+};
+
+
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [user, setUser] = React.useState<User | null>(null);
   const [isClient, setIsClient] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -69,14 +95,27 @@ export default function ProfilePage() {
 
   const avatarPreview = watch('avatarUrl');
 
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setValue('avatarUrl', reader.result as string, { shouldValidate: true, shouldDirty: true });
-      };
-      reader.readAsDataURL(file);
+      setIsUploading(true);
+      try {
+        const imageUrl = await uploadImageToCloud(file);
+        setValue('avatarUrl', imageUrl, { shouldValidate: true, shouldDirty: true });
+        toast({
+            title: 'Image Uploaded',
+            description: 'Your new profile picture is ready to be saved.',
+        });
+      } catch (error) {
+        console.error("Image upload error", error);
+        toast({
+            variant: 'destructive',
+            title: 'Upload Failed',
+            description: 'There was an error uploading your image.',
+        })
+      } finally {
+        setIsUploading(false);
+      }
     }
   };
   
@@ -152,11 +191,21 @@ export default function ProfilePage() {
                     className={cn(
                         "relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80",
                         "flex items-center justify-center gap-2 border border-dashed border-input p-4 text-center text-sm",
+                        isUploading && "cursor-not-allowed opacity-50"
                     )}
                     >
-                    <UploadCloud className="h-5 w-5" />
-                    <span>Change Picture</span>
-                    <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
+                    {isUploading ? (
+                        <>
+                            <LoaderCircle className="h-5 w-5 animate-spin" />
+                            <span>Uploading...</span>
+                        </>
+                    ) : (
+                        <>
+                            <UploadCloud className="h-5 w-5" />
+                            <span>Change Picture</span>
+                        </>
+                    )}
+                    <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" disabled={isUploading}/>
                 </label>
               </div>
             </div>
@@ -190,8 +239,8 @@ export default function ProfilePage() {
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Back
             </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+            <Button type="submit" disabled={isSaving || isUploading}>
+              {(isSaving || isUploading) && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
             </Button>
           </div>
