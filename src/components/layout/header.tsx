@@ -115,6 +115,10 @@ export function AppHeader() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
 
+  const canSeeNotifications = user && user.role !== 'General Member';
+  const canSeeProfile = user && user.role !== 'General Member';
+
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 lg:px-8">
       <div className="md:hidden">
@@ -137,7 +141,8 @@ export function AppHeader() {
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>
-
+        
+        {canSeeNotifications && (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full relative">
@@ -190,6 +195,7 @@ export function AppHeader() {
                 )}
             </DropdownMenuContent>
         </DropdownMenu>
+        )}
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -210,12 +216,14 @@ export function AppHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            {canSeeProfile && (
             <DropdownMenuItem asChild>
                 <Link href="/profile">
                     <User className="mr-2 h-4 w-4" />
                     <span>Profile</span>
                 </Link>
             </DropdownMenuItem>
+            )}
             <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -227,5 +235,3 @@ export function AppHeader() {
     </header>
   );
 }
-
-    

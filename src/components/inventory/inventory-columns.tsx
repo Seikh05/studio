@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -15,11 +16,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
-import type { InventoryItem } from "@/lib/types"
+import type { InventoryItem, User } from "@/lib/types"
 
 const ActionsCell = ({ row, table }: { row: any, table: any }) => {
   const item = row.original as InventoryItem;
   const router = useRouter();
+  const { currentUser } = table.options.meta || {};
+
+  if (!currentUser || currentUser.role === 'General Member') {
+    return null;
+  }
 
   return (
     <div className="text-right">

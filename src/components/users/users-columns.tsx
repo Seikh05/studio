@@ -89,8 +89,8 @@ export const usersColumns: ColumnDef<User>[] = [
     header: "Role",
      cell: ({ row }) => {
       const role = row.getValue("role") as string
-      const variant: "outline" | "default" =
-        role === "Admin" ? "outline" : "default"
+      const variant: "outline" | "secondary" | "default" =
+        role === "Admin" ? "outline" : role === "General Member" ? "secondary" : "default"
       return <Badge variant={variant} className="capitalize">{role}</Badge>
     },
   },

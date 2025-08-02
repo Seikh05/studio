@@ -15,7 +15,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'Super Admin';
+  role: 'Admin' | 'Super Admin' | 'General Member';
   status: 'Active' | 'Inactive';
   lastLogin: string;
   avatarUrl: string;

@@ -76,10 +76,16 @@ export function LoginForm() {
             // Create a session object without the password or other large data
             const sessionUser = { ...user };
             delete sessionUser.password;
-            delete sessionUser.avatarUrl; // Don't store large image data in the session
+            // Don't store large image data in the session to avoid quota issues
+            // We'll fetch the full profile on the dashboard/layout instead
             
             window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
-            router.push("/inventory")
+            
+            if (user.role === 'General Member') {
+                router.push("/inventory")
+            } else {
+                router.push("/dashboard")
+            }
         } catch (error) {
             console.error("Failed to save user session", error);
             

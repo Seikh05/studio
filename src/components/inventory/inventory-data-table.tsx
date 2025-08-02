@@ -55,6 +55,7 @@ declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     openForm: (item: TData) => void
     openDeleteDialog: (item: TData) => void
+    currentUser: User | null
   }
 }
 
@@ -125,6 +126,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   
   const [data, setData] = React.useState<TData[]>(initialData);
   const [isClient, setIsClient] = React.useState(false)
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [categories, setCategories] = React.useState<Category[]>(defaultCategories);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
 
@@ -135,6 +137,12 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   React.useEffect(() => {
     if (isClient) {
       try {
+        // Load current user
+        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+        if (storedUser) {
+          setCurrentUser(JSON.parse(storedUser));
+        }
+
         // Load inventory
         const storedData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
         if (storedData) {
@@ -239,7 +247,8 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         setItemToDelete(item);
         setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
-      }
+      },
+      currentUser,
     }
   })
 
@@ -317,6 +326,9 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     return null; // Or a loading skeleton
   }
 
+  const canManageInventory = currentUser && currentUser.role !== 'General Member';
+
+
   return (
     <div className="space-y-4">
        <ItemForm 
@@ -374,6 +386,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
           }
           className="w-full md:max-w-sm"
         />
+        {canManageInventory && (
         <div className="flex w-full items-center justify-between md:justify-end md:gap-2">
             <div className="md:hidden">
                 <Button onClick={handleOpenNew} size="icon">
@@ -425,6 +438,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
                 </Button>
             </div>
         </div>
+        )}
       </div>
       <Card className="shadow-sm">
         <Table>

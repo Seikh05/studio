@@ -87,13 +87,16 @@ export function AppSidebar() {
       .toUpperCase();
   };
 
-  const navItems = [
-    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { href: '/inventory', icon: Package, label: 'Inventory' },
-    { href: '/due-items', icon: CalendarClock, label: 'Due Items' },
-    { href: '/users', icon: Users, label: 'User Management' },
-    { href: '/logs', icon: ScrollText, label: 'Inventory Log' },
+  const allNavItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Super Admin'] },
+    { href: '/inventory', icon: Package, label: 'Inventory', roles: ['Admin', 'Super Admin', 'General Member'] },
+    { href: '/due-items', icon: CalendarClock, label: 'Due Items', roles: ['Admin', 'Super Admin'] },
+    { href: '/users', icon: Users, label: 'User Management', roles: ['Admin', 'Super Admin'] },
+    { href: '/logs', icon: ScrollText, label: 'Inventory Log', roles: ['Admin', 'Super Admin'] },
   ];
+
+  const navItems = allNavItems.filter(item => user && item.roles.includes(user.role));
+
 
   return (
     <Sidebar>

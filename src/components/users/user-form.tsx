@@ -39,7 +39,7 @@ import { ScrollArea } from "../ui/scroll-area"
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  role: z.enum(["Admin", "Super Admin"]),
+  role: z.enum(["Admin", "Super Admin", "General Member"]),
   password: z.string().min(8, "Password must be at least 8 characters.").optional().or(z.literal('')),
 })
 
@@ -81,7 +81,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
             form.reset({
                 name: "",
                 email: "",
-                role: "Admin",
+                role: "General Member",
                 password: "",
             })
         }
@@ -190,6 +190,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
                         <SelectContent>
                           <SelectItem value="Admin">Admin</SelectItem>
                           <SelectItem value="Super Admin">Super Admin</SelectItem>
+                           <SelectItem value="General Member">General Member</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
