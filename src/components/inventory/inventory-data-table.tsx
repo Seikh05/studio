@@ -62,6 +62,7 @@ interface DataTableProps<TData, TValue> {
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const LOGS_STORAGE_KEY = 'logs-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
+const MAX_LOG_ENTRIES = 100;
 
 const notifyLogUpdate = () => {
   window.dispatchEvent(new Event('logs-updated'));
@@ -91,7 +92,7 @@ const addLogEntry = (action: string, details: string) => {
     const existingLogsRaw = window.localStorage.getItem(LOGS_STORAGE_KEY);
     const existingLogs: LogEntry[] = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
     
-    const updatedLogs = [newLog, ...existingLogs];
+    const updatedLogs = [newLog, ...existingLogs].slice(0, MAX_LOG_ENTRIES);
     window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
     notifyLogUpdate();
   } catch (error) {
