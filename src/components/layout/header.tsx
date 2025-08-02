@@ -11,6 +11,7 @@ import Link from 'next/link';
 import type { User as UserType } from '@/lib/types';
 
 const pathToTitle: { [key: string]: string } = {
+  '/dashboard': 'Dashboard',
   '/inventory': 'Inventory Management',
   '/users': 'User Management',
   '/logs': 'Inventory Log',

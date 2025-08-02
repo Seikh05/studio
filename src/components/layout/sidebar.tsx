@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Package, Users, ScrollText, LogOut } from 'lucide-react';
+import { Package, Users, ScrollText, LogOut, LayoutDashboard } from 'lucide-react';
 import Image from 'next/image';
 import {
   Sidebar,
@@ -69,6 +69,7 @@ export function AppSidebar() {
   };
 
   const navItems = [
+    { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/inventory', icon: Package, label: 'Inventory' },
     { href: '/users', icon: Users, label: 'User Management' },
     { href: '/logs', icon: ScrollText, label: 'Inventory Log' },
