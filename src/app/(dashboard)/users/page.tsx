@@ -8,6 +8,7 @@ import { usersColumns } from '@/components/users/users-columns';
 import { LoaderCircle } from 'lucide-react';
 
 const STORAGE_KEY = 'user-data';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 const initialUsers: User[] = [
     {
@@ -60,6 +61,7 @@ const initialUsers: User[] = [
 export default function UsersPage() {
   const [data, setData] = React.useState<User[]>([]);
   const [isClient, setIsClient] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   const loadData = React.useCallback(() => {
     try {
@@ -79,6 +81,14 @@ export default function UsersPage() {
   React.useEffect(() => {
     setIsClient(true);
     loadData();
+    try {
+        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+        if(storedUser) {
+            setCurrentUser(JSON.parse(storedUser));
+        }
+    } catch (error) {
+        console.error("Failed to get current user from localStorage", error);
+    }
   }, [loadData]);
   
   if (!isClient) {
@@ -89,5 +99,5 @@ export default function UsersPage() {
     );
   }
 
-  return <UserDataTable columns={usersColumns} data={data} onDataChange={loadData} />;
+  return <UserDataTable columns={usersColumns} data={data} onDataChange={loadData} currentUser={currentUser} />;
 }

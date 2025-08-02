@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -102,6 +103,11 @@ export const usersColumns: ColumnDef<User>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const user = row.original
+      // @ts-ignore
+      const { currentUser } = table.options.meta || {};
+      
+      const canManageUsers = currentUser?.role === 'Super Admin';
+      const isSelf = currentUser?.id === user.id;
 
       return (
         <div className="text-right">
@@ -118,13 +124,17 @@ export const usersColumns: ColumnDef<User>[] = [
                 Edit user
               </DropdownMenuItem>
               <DropdownMenuItem>Change permissions</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                onClick={() => table.options.meta?.openDeleteDialog?.(user)}
-              >
-                Remove user
-              </DropdownMenuItem>
+              {canManageUsers && !isSelf && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={() => table.options.meta?.openDeleteDialog?.(user)}
+                  >
+                    Remove user
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

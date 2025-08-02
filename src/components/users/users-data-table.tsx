@@ -47,7 +47,8 @@ import { Label } from "../ui/label"
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     openForm: (user: TData) => void
-    openDeleteDialog: (user: TData) => void
+    openDeleteDialog: (user: TData) => void,
+    currentUser: User | null
   }
 }
 
@@ -55,6 +56,7 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onDataChange: () => void;
+  currentUser: User | null;
 }
 
 const STORAGE_KEY = 'user-data';
@@ -64,20 +66,9 @@ export function UserDataTable<TData extends User, TValue>({
   columns,
   data,
   onDataChange,
+  currentUser,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-
-  React.useEffect(() => {
-     try {
-        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-        if (storedUser) {
-            setCurrentUser(JSON.parse(storedUser));
-        }
-     } catch (error) {
-        console.error("Failed to get current user from localStorage", error);
-     }
-  }, []);
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -110,7 +101,8 @@ export function UserDataTable<TData extends User, TValue>({
         setUserToDelete(user);
         setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
-      }
+      },
+      currentUser,
     }
   })
 
@@ -151,7 +143,7 @@ export function UserDataTable<TData extends User, TValue>({
                 description: `${formData.name} has been successfully created.`,
             });
         }
-        onDataChange(); // Trigger data refresh in parent
+        onDataChange();
         setIsFormOpen(false);
         setSelectedUser(null);
     } catch(error) {
@@ -166,6 +158,15 @@ export function UserDataTable<TData extends User, TValue>({
 
   const handleDelete = () => {
     if (!userToDelete) return;
+    if (currentUser?.role !== 'Super Admin') {
+        toast({
+            variant: "destructive",
+            title: "Permission Denied",
+            description: "You do not have permission to remove users."
+        });
+        return;
+    }
+
      try {
         const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
         const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
