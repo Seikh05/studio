@@ -200,18 +200,24 @@ export function UserDataTable<TData extends User, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Filter by name or email..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          className="w-full md:max-w-sm"
         />
-        <Button onClick={handleOpenNew}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add User
-        </Button>
+        <div className="flex justify-end">
+            <Button onClick={handleOpenNew} className="md:hidden" size="icon">
+                <PlusCircle className="h-4 w-4" />
+                <span className="sr-only">Add User</span>
+            </Button>
+             <Button onClick={handleOpenNew} className="hidden md:flex">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add User
+            </Button>
+        </div>
       </div>
       <Card className="shadow-sm">
         <Table>
