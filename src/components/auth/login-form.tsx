@@ -85,6 +85,17 @@ export function LoginForm() {
       // In this demo, the password is either the plain-text 'password' (for original users)
       // or it matches the password set in the user form (for new users).
       if (user && (user.password === values.password || values.password === 'password' || !user.password)) {
+        
+        if(user.role === 'New User') {
+            toast({
+                variant: 'destructive',
+                title: 'Login Failed',
+                description: 'Your account is pending admin approval. Please check back later.'
+            });
+            setIsLoading(false);
+            return;
+        }
+        
         try {
             // Create a session object without the password or other large data
             const sessionUser = { ...user };

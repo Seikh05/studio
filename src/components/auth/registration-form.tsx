@@ -70,7 +70,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           name: values.name,
           email: values.email,
           password: values.password,
-          role: 'General Member',
+          role: 'New User',
           status: 'Active',
           lastLogin: new Date().toISOString(),
           avatarUrl: `https://placehold.co/40x40.png`,
@@ -81,7 +81,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         
         toast({
           title: "Registration Successful",
-          description: "You can now sign in with your new account.",
+          description: "Your account has been created and is awaiting admin approval.",
         });
         
         form.reset();

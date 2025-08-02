@@ -89,8 +89,22 @@ export const usersColumns: ColumnDef<User>[] = [
     header: "Role",
      cell: ({ row }) => {
       const role = row.getValue("role") as string
-      const variant: "outline" | "secondary" | "default" =
-        role === "Admin" ? "outline" : role === "General Member" ? "secondary" : "default"
+      let variant: "outline" | "secondary" | "default" | "destructive" = "default";
+      switch(role) {
+        case "Admin":
+          variant = "outline";
+          break;
+        case "General Member":
+          variant = "secondary";
+          break;
+        case "New User":
+          variant = "destructive";
+          break;
+        case "Super Admin":
+        default:
+          variant = "default";
+          break;
+      }
       return <Badge variant={variant} className="capitalize">{role}</Badge>
     },
   },
@@ -106,7 +120,7 @@ export const usersColumns: ColumnDef<User>[] = [
       // @ts-ignore
       const { currentUser } = table.options.meta || {};
       
-      const canManageUsers = currentUser?.role === 'Super Admin';
+      const canManageUsers = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
       const isSelf = currentUser?.id === user.id;
 
       return (

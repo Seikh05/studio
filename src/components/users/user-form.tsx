@@ -39,7 +39,7 @@ import { ScrollArea } from "../ui/scroll-area"
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
-  role: z.enum(["Admin", "Super Admin", "General Member"]),
+  role: z.enum(["Admin", "Super Admin", "General Member", "New User"]),
   password: z.string().min(8, "Password must be at least 8 characters.").optional().or(z.literal('')),
   phone: z.string().optional(),
   regdNum: z.string().optional(),
@@ -65,7 +65,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
     defaultValues: {
       name: "",
       email: "",
-      role: "Admin",
+      role: "New User",
       password: "",
       phone: "",
       regdNum: "",
@@ -87,7 +87,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
             form.reset({
                 name: "",
                 email: "",
-                role: "General Member",
+                role: "New User",
                 password: "",
                 phone: "",
                 regdNum: "",
@@ -112,7 +112,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
     })
   }
 
-  const canEditRole = currentUser?.role === 'Super Admin';
+  const canEditRole = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -222,9 +222,10 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          {currentUser?.role === 'Super Admin' && <SelectItem value="Super Admin">Super Admin</SelectItem>}
                           <SelectItem value="Admin">Admin</SelectItem>
-                          <SelectItem value="Super Admin">Super Admin</SelectItem>
                            <SelectItem value="General Member">General Member</SelectItem>
+                           <SelectItem value="New User">New User</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
