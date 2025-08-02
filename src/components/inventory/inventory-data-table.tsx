@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, SlidersHorizontal, Trash2 } from "lucide-react"
+import { PlusCircle, SlidersHorizontal, Trash2, ListTree } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ItemForm } from "./item-form"
-import type { InventoryItem, LogEntry, User } from "@/lib/types"
+import type { InventoryItem, LogEntry, User, Category } from "@/lib/types"
 import { Card } from "@/components/ui/card"
 import {
   AlertDialog,
@@ -46,6 +46,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { CategoryManager } from "./category-manager"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
@@ -62,7 +63,16 @@ interface DataTableProps<TData, TValue> {
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const LOGS_STORAGE_KEY = 'logs-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
+const CATEGORIES_STORAGE_KEY = 'inventory-categories';
 const MAX_LOG_ENTRIES = 50;
+
+const defaultCategories: Category[] = [
+    { id: 'cat-1', name: 'Gadgets' },
+    { id: 'cat-2', name: 'Robotics' },
+    { id: 'cat-3', name: 'Apparel' },
+    { id: 'cat-4', name: 'Power Sources' },
+    { id: 'cat-5', name: 'Other' },
+];
 
 const notifyLogUpdate = () => {
   window.dispatchEvent(new Event('logs-updated'));
@@ -111,6 +121,8 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   
   const [data, setData] = React.useState<TData[]>(initialData);
   const [isClient, setIsClient] = React.useState(false)
+  const [categories, setCategories] = React.useState<Category[]>(defaultCategories);
+  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true)
@@ -119,15 +131,22 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   React.useEffect(() => {
     if (isClient) {
       try {
+        // Load inventory
         const storedData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
         if (storedData) {
           setData(JSON.parse(storedData));
         } else {
            window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialData));
         }
+        // Load categories
+        const storedCategories = window.localStorage.getItem(CATEGORIES_STORAGE_KEY);
+        if (storedCategories) {
+            setCategories(JSON.parse(storedCategories));
+        } else {
+            window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(defaultCategories));
+        }
       } catch (error) {
         console.error("Failed to access localStorage", error);
-        // Fallback to initial data if localStorage fails
         setData(initialData)
       }
     }
@@ -142,6 +161,34 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         }
     }
   }, [data, isClient]);
+
+  const handleSaveCategories = (updatedCategories: Category[]) => {
+    setCategories(updatedCategories);
+    if(isClient) {
+        try {
+            window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
+            toast({ title: "Categories Updated", description: "Your category list has been saved." });
+        } catch (error) {
+            console.error("Failed to save categories to localStorage", error);
+            toast({ variant: "destructive", title: "Save Failed", description: "Could not save category list." });
+        }
+    }
+    // Potentially update items if a category was renamed or deleted
+    const oldCategoryNames = categories.map(c => c.name);
+    const updatedCategoryNames = updatedCategories.map(c => c.name);
+    
+    // Simple check: if a category was removed, update items using it to "Other"
+    const removedCategories = oldCategoryNames.filter(name => !updatedCategoryNames.includes(name));
+    if (removedCategories.length > 0) {
+        const defaultCategory = updatedCategories.find(c => c.name === 'Other')?.name || updatedCategories[0]?.name || '';
+        setData(prevData => prevData.map(item => {
+            if (removedCategories.includes(item.category)) {
+                return { ...item, category: defaultCategory };
+            }
+            return item;
+        }));
+    }
+  };
 
 
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -260,6 +307,13 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         onOpenChange={setIsFormOpen} 
         item={selectedItem}
         onSave={handleSaveItem}
+        categories={categories}
+      />
+      <CategoryManager 
+        isOpen={isCategoryManagerOpen}
+        onOpenChange={setIsCategoryManagerOpen}
+        categories={categories}
+        onSave={handleSaveCategories}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -292,6 +346,10 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
           />
         </div>
         <div className="flex items-center gap-2">
+           <Button variant="outline" onClick={() => setIsCategoryManagerOpen(true)}>
+             <ListTree className="mr-2 h-4 w-4" />
+             Edit Categories
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">

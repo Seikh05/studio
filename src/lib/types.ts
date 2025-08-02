@@ -43,6 +43,11 @@ export type ItemTransaction = {
   itemName?: string;
 }
 
+export type Category = {
+  id: string;
+  name: string;
+}
+
 // Re-exporting AI types to be used in client components
 export type {
   ValidateDescriptionConsistencyInput,

@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 import { validateDescriptionConsistency } from "@/ai/flows/validate-description-consistency"
-import type { InventoryItem, ValidateDescriptionConsistencyOutput } from "@/lib/types"
+import type { InventoryItem, ValidateDescriptionConsistencyOutput, Category } from "@/lib/types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const formSchema = z.object({
@@ -53,9 +53,10 @@ interface ItemFormProps {
   onOpenChange: (isOpen: boolean) => void
   item: InventoryItem | null,
   onSave: (data: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'> & { stockUpdateNote?: string }) => void
+  categories: Category[]
 }
 
-export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) {
+export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: ItemFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [isAiValidating, setIsAiValidating] = useState(false)
@@ -239,11 +240,9 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="Gadgets">Gadgets</SelectItem>
-                          <SelectItem value="Robotics">Robotics</SelectItem>
-                          <SelectItem value="Apparel">Apparel</SelectItem>
-                          <SelectItem value="Power Sources">Power Sources</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
