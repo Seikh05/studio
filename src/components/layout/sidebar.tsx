@@ -105,7 +105,7 @@ export function AppSidebar() {
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Super Admin'] },
     { href: '/inventory', icon: Package, label: 'Inventory', roles: ['Admin', 'Super Admin', 'General Member'] },
     { href: '/due-items', icon: CalendarClock, label: 'Due Items', roles: ['Admin', 'Super Admin'] },
-    { href: '/users', icon: Users, label: 'User Management', roles: ['Admin', 'Super Admin'], notificationCount: pendingUsersCount },
+    { href: '/users', icon: Users, label: 'User Management', roles: ['Admin', 'Super Admin'] },
     { href: '/logs', icon: ScrollText, label: 'Inventory Log', roles: ['Admin', 'Super Admin'] },
   ];
 
@@ -149,7 +149,7 @@ export function AppSidebar() {
                 <Link href={item.href} className="relative">
                   <item.icon />
                   <span className="flex-1">{item.label}</span>
-                   {item.notificationCount && item.notificationCount > 0 && (
+                   {item.href === '/users' && pendingUsersCount > 0 && (
                      <div className={cn(
                             "h-2 w-2 rounded-full bg-destructive transition-opacity duration-200",
                             state === 'collapsed' && 'opacity-0'
