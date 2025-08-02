@@ -69,6 +69,7 @@ export default function DueItemsPage() {
                                     itemName: item.name,
                                     itemImageUrl: item.imageUrl,
                                     borrowerName: t.borrowerName || 'Unknown',
+                                    borrowerRegdNum: t.borrowerRegdNum,
                                     borrowerPhone: t.borrowerPhone,
                                     returnDate: t.returnDate!,
                                     daysRemaining: daysRemaining,
@@ -102,6 +103,7 @@ export default function DueItemsPage() {
         const filteredData = allDueItems.filter(item => {
             return (
                 item.borrowerName.toLowerCase().includes(lowercasedFilter) ||
+                (item.borrowerRegdNum && item.borrowerRegdNum.toLowerCase().includes(lowercasedFilter)) ||
                 (item.borrowerPhone && item.borrowerPhone.includes(lowercasedFilter)) ||
                 item.itemName.toLowerCase().includes(lowercasedFilter)
             );
@@ -130,7 +132,7 @@ export default function DueItemsPage() {
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Filter by name, phone, or item..."
+                        placeholder="Filter by name, regd no, or item..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full sm:w-64 pl-10"

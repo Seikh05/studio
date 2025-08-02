@@ -71,6 +71,7 @@ export type DueItem = {
   itemName: string;
   itemImageUrl: string;
   borrowerName: string;
+  borrowerRegdNum?: string;
   borrowerPhone?: string;
   returnDate: string;
   daysRemaining: number;
