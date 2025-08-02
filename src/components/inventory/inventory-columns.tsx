@@ -107,6 +107,21 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
     },
   },
   {
+    id: "log",
+    header: () => <div className="text-center">Log</div>,
+    cell: ({ row }) => {
+      const item = row.original;
+      const router = useRouter();
+      return (
+        <div className="text-center">
+          <Button variant="outline" size="sm" onClick={() => router.push(`/inventory/${item.id}`)}>
+            View Log
+          </Button>
+        </div>
+      );
+    },
+  },
+  {
     id: "actions",
     header: () => <div className="text-right">Actions</div>,
     cell: ActionsCell,
