@@ -63,7 +63,9 @@ export function AppSidebar() {
 
   const handleBackToHome = () => {
     router.push('/dashboard');
-    setOpenMobile(false);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   }
 
   const getInitials = (name: string) => {
@@ -136,9 +138,9 @@ export function AppSidebar() {
             <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
             <AvatarFallback>{user ? getInitials(user.name) : 'AU'}</AvatarFallback>
           </Avatar>
-          <div className={cn('flex flex-col grow', state === 'collapsed' && 'hidden')}>
-            <span className="text-sm font-semibold text-foreground">{user?.name || 'Admin User'}</span>
-            <span className="text-xs text-muted-foreground">{user?.email || 'admin@example.com'}</span>
+          <div className={cn('flex flex-col grow min-w-0', state === 'collapsed' && 'hidden')}>
+            <span className="text-xs font-semibold text-foreground truncate">{user?.name || 'Admin User'}</span>
+            <span className="text-[11px] text-muted-foreground truncate">{user?.email || 'admin@example.com'}</span>
           </div>
           <Button variant="ghost" size="icon" className={cn('text-muted-foreground', state === 'collapsed' ? 'hidden' : 'flex')} onClick={handleLogout}>
             <LogOut className="w-4 h-4" />
