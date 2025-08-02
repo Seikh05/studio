@@ -82,7 +82,12 @@ export function AppSidebar() {
   };
 
   const handleBackToHome = () => {
-    router.push('/dashboard');
+    if (user?.role === 'General Member') {
+      router.push('/inventory');
+    } else {
+      router.push('/dashboard');
+    }
+    
     if (isMobile) {
       setOpenMobile(false);
     }
