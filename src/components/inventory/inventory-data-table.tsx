@@ -33,7 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ItemForm } from "./item-form"
-import type { InventoryItem } from "@/lib/types"
+import type { InventoryItem, LogEntry } from "@/lib/types"
 import { Card } from "@/components/ui/card"
 import {
   AlertDialog,
@@ -59,7 +59,34 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
-const STORAGE_KEY = 'inventory-data';
+const INVENTORY_STORAGE_KEY = 'inventory-data';
+const LOGS_STORAGE_KEY = 'logs-data';
+
+const notifyLogUpdate = () => {
+  window.dispatchEvent(new Event('logs-updated'));
+};
+
+const addLogEntry = (action: string, details: string) => {
+  try {
+    const newLog: LogEntry = {
+      id: `LOG-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      adminName: 'Admin User', // In a real app, this would come from auth state
+      adminAvatar: 'https://placehold.co/40x40.png',
+      action,
+      details,
+    };
+
+    const existingLogsRaw = window.localStorage.getItem(LOGS_STORAGE_KEY);
+    const existingLogs: LogEntry[] = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
+    
+    const updatedLogs = [newLog, ...existingLogs];
+    window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
+    notifyLogUpdate();
+  } catch (error) {
+    console.error("Failed to add log entry:", error);
+  }
+};
 
 export function InventoryDataTable<TData extends InventoryItem, TValue>({
   columns,
@@ -77,11 +104,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   React.useEffect(() => {
     if (isClient) {
       try {
-        const storedData = window.localStorage.getItem(STORAGE_KEY);
+        const storedData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
         if (storedData) {
           setData(JSON.parse(storedData));
         } else {
-           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+           window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialData));
         }
       } catch (error) {
         console.error("Failed to access localStorage", error);
@@ -94,7 +121,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   React.useEffect(() => {
     if (isClient) {
         try {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(data));
         } catch (error) {
             console.error("Failed to save to localStorage", error);
         }
@@ -156,6 +183,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         title: "Item Updated",
         description: `${formData.name} has been successfully updated.`,
       })
+      addLogEntry('Item Updated', `Updated details for "${formData.name}".`);
     } else {
       const newItem: InventoryItem = {
         id: `ITEM-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -169,6 +197,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         title: "Item Added",
         description: `${formData.name} has been successfully created.`,
       })
+      addLogEntry('Item Added', `Added new item "${formData.name}".`);
     }
     setIsFormOpen(false);
     setSelectedItem(null);
@@ -181,8 +210,13 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       title: "Item Deleted",
       description: `${itemToDelete.name} has been removed from the inventory.`,
     });
+    addLogEntry('Item Deleted', `Deleted item "${itemToDelete.name}".`);
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);
+  }
+
+  if (!isClient) {
+    return null; // Or a loading skeleton
   }
 
   return (
