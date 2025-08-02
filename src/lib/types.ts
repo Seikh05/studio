@@ -40,6 +40,7 @@ export type ItemTransaction = {
   reminder: boolean;
   adminName: string;
   adminAvatar: string;
+  returned?: boolean;
 }
 
 // Re-exporting AI types to be used in client components

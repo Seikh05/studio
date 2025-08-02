@@ -54,7 +54,36 @@ export default function ItemLogPage() {
     }
   }, [itemId, toast]);
 
-  const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar'>) => {
+  const handleTransactionUpdate = (updatedTransactions: ItemTransaction[], updatedItem: InventoryItem) => {
+     // Update state
+    setItem(updatedItem);
+    setTransactions(updatedTransactions);
+
+    try {
+      // Update inventory in localStorage
+      const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
+      if (inventoryData) {
+        let inventory: InventoryItem[] = JSON.parse(inventoryData);
+        inventory = inventory.map(i => i.id === itemId ? updatedItem : i);
+        window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
+      }
+
+      // Update transactions in localStorage
+      const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${itemId}`;
+      window.localStorage.setItem(transactionsKey, JSON.stringify(updatedTransactions));
+
+    } catch (error) {
+       console.error('Failed to save data to localStorage', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to save transaction.',
+      });
+    }
+  }
+
+
+  const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar' | 'returned'>) => {
     if (!item) return;
 
     const transaction: ItemTransaction = {
@@ -63,6 +92,7 @@ export default function ItemLogPage() {
       timestamp: new Date().toISOString(),
       adminName: 'Admin User', // Replace with actual logged-in user
       adminAvatar: 'https://placehold.co/40x40.png',
+      returned: false,
     };
 
     const newStock = newTransaction.type === 'borrow' 
@@ -85,36 +115,53 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
     
-    // Update state
-    setItem(updatedItem);
     const updatedTransactions = [transaction, ...transactions];
-    setTransactions(updatedTransactions);
 
-    try {
-      // Update inventory in localStorage
-      const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
-      if (inventoryData) {
-        let inventory: InventoryItem[] = JSON.parse(inventoryData);
-        inventory = inventory.map(i => i.id === itemId ? updatedItem : i);
-        window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-      }
+    handleTransactionUpdate(updatedTransactions, updatedItem);
 
-      // Update transactions in localStorage
-      const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${itemId}`;
-      window.localStorage.setItem(transactionsKey, JSON.stringify(updatedTransactions));
+    toast({
+      title: 'Transaction Logged',
+      description: `Successfully logged ${newTransaction.type} of ${newTransaction.quantity} item(s).`,
+    });
+  };
 
-      toast({
-        title: 'Transaction Logged',
-        description: `Successfully logged ${newTransaction.type} of ${newTransaction.quantity} item(s).`,
-      });
-    } catch (error) {
-       console.error('Failed to save data to localStorage', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to save transaction.',
-      });
-    }
+  const handleReturnTransaction = (borrowTransaction: ItemTransaction) => {
+    if (!item) return;
+
+    // Create the new "return" transaction
+    const returnTransaction: ItemTransaction = {
+        id: `TXN-${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        type: 'return',
+        quantity: borrowTransaction.quantity,
+        notes: `Return of transaction ${borrowTransaction.id}`,
+        adminName: 'Admin User', // Replace with actual logged-in user
+        adminAvatar: 'https://placehold.co/40x40.png',
+        reminder: false,
+        returned: false, // Not applicable for return transactions
+    };
+    
+    // Update the stock
+    const newStock = item.stock + borrowTransaction.quantity;
+    const updatedItem: InventoryItem = {
+      ...item,
+      stock: newStock,
+      status: newStock > 0 ? (newStock < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
+      lastUpdated: new Date().toISOString(),
+    };
+
+    // Mark the original borrow transaction as returned
+    const updatedTransactions = [
+      returnTransaction, 
+      ...transactions.map(t => t.id === borrowTransaction.id ? { ...t, returned: true } : t)
+    ];
+
+    handleTransactionUpdate(updatedTransactions, updatedItem);
+
+    toast({
+      title: 'Item Returned',
+      description: `Logged return of ${borrowTransaction.quantity} item(s). Stock updated.`,
+    });
   };
 
 
@@ -205,7 +252,7 @@ export default function ItemLogPage() {
                  <CardDescription>A complete log of all activities for this item.</CardDescription>
               </CardHeader>
               <CardContent>
-                <TransactionHistory transactions={transactions} />
+                <TransactionHistory transactions={transactions} onReturn={handleReturnTransaction} />
               </CardContent>
            </Card>
         </div>

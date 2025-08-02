@@ -33,7 +33,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar'>) => void;
+  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar' | 'returned'>) => void;
 }
 
 export function TransactionForm({ onSubmit }: TransactionFormProps) {
