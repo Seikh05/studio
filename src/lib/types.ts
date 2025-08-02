@@ -4,7 +4,6 @@ export type InventoryItem = {
   category: string;
   status: 'In Stock' | 'Low Stock' | 'Out of Stock';
   stock: number;
-  price: number;
   description: string;
   imageUrl: string;
   lastUpdated: string;

@@ -41,7 +41,6 @@ const formSchema = z.object({
   name: z.string().min(3, "Item name must be at least 3 characters."),
   category: z.string().min(1, "Category is required."),
   stock: z.coerce.number().min(0, "Stock can't be negative."),
-  price: z.coerce.number().min(0, "Price can't be negative."),
   description: z.string().min(10, "Description must be at least 10 characters long."),
 })
 
@@ -64,7 +63,6 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
       name: "",
       category: "",
       stock: 0,
-      price: 0,
       description: "",
     },
   })
@@ -76,7 +74,6 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
             name: item.name,
             category: item.category,
             stock: item.stock,
-            price: item.price,
             description: item.description,
         })
         setImagePreview(item.imageUrl)
@@ -85,7 +82,6 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
             name: "",
             category: "",
             stock: 0,
-            price: 0,
             description: "",
         })
         setImagePreview(null)
@@ -206,12 +202,12 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
                   </FormItem>
                 )}
               />
-               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="category"
                   render={({ field }) => (
-                    <FormItem className="sm:col-span-1">
+                    <FormItem>
                       <FormLabel>Category</FormLabel>
                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
@@ -239,19 +235,6 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
                         <FormLabel>Stock</FormLabel>
                         <FormControl>
                           <Input type="number" placeholder="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="price"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Price ($)</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="0.00" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

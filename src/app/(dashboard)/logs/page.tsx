@@ -42,8 +42,8 @@ async function getLogsData(): Promise<LogEntry[]> {
       timestamp: '2024-07-25T18:20:00Z',
       adminName: 'Bob Williams',
       adminAvatar: 'https://placehold.co/40x40.png',
-      action: 'Item Price Changed',
-      details: 'Updated price of "Robo-Companion X1" to $1250.50.',
+      action: 'Item Stock Changed',
+      details: 'Updated stock of "Robo-Companion X1" to 15.',
     },
   ];
 }
