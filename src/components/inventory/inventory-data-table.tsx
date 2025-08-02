@@ -169,7 +169,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     setIsFormOpen(true)
   }
   
-  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
+  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'> & { stockUpdateNote?: string }) => {
     if (selectedItem) {
       const oldStock = selectedItem.stock;
       const newStock = Number(formData.stock);
@@ -190,7 +190,10 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
 
       if (stockChange !== 0) {
           const action = stockChange > 0 ? 'Stock Increased' : 'Stock Decreased';
-          const details = `${action} for "${formData.name}". New stock: ${newStock} (${stockChange > 0 ? '+' : ''}${stockChange}).`;
+          let details = `${action} for "${formData.name}". New stock: ${newStock} (${stockChange > 0 ? '+' : ''}${stockChange}).`;
+          if (formData.stockUpdateNote) {
+            details += ` Note: ${formData.stockUpdateNote}`;
+          }
           addLogEntry(action, details);
       } else {
         addLogEntry('Item Details Updated', `Updated details for "${formData.name}".`);
@@ -209,7 +212,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         title: "Item Added",
         description: `${formData.name} has been successfully created.`,
       })
-      addLogEntry('Item Added', `Added new item "${formData.name}" with initial stock of ${newItem.stock}.`);
+      let logDetails = `Added new item "${formData.name}" with initial stock of ${newItem.stock}.`;
+      if (formData.stockUpdateNote) {
+        logDetails += ` Note: ${formData.stockUpdateNote}`;
+      }
+      addLogEntry('Item Added', logDetails);
     }
     setIsFormOpen(false);
     setSelectedItem(null);

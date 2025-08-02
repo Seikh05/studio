@@ -43,6 +43,7 @@ const formSchema = z.object({
   stock: z.coerce.number().min(0, "Stock can't be negative."),
   description: z.string().optional(),
   imageUrl: z.string().url("Invalid image URL").optional().or(z.literal('')),
+  stockUpdateNote: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -51,7 +52,7 @@ interface ItemFormProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
   item: InventoryItem | null,
-  onSave: (data: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => void
+  onSave: (data: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'> & { stockUpdateNote?: string }) => void
 }
 
 export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) {
@@ -68,10 +69,14 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
       stock: 0,
       description: "",
       imageUrl: "",
+      stockUpdateNote: "",
     },
   })
 
   const imagePreview = form.watch("imageUrl");
+  const stockValue = form.watch("stock");
+  
+  const isStockChanged = item ? item.stock !== stockValue : false;
   
   useEffect(() => {
     if (isOpen) {
@@ -82,6 +87,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
             stock: item.stock,
             description: item.description,
             imageUrl: item.imageUrl,
+            stockUpdateNote: "",
         })
         } else {
         form.reset({
@@ -90,6 +96,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
             stock: 0,
             description: "",
             imageUrl: "",
+            stockUpdateNote: "",
         })
         }
         setAiValidationResult(null)
@@ -140,11 +147,19 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
   };
 
   const onSubmit = (values: FormData) => {
+     if (isStockChanged && !values.stockUpdateNote) {
+      form.setError("stockUpdateNote", {
+        type: "manual",
+        message: "A note is required when changing stock quantity.",
+      });
+      return;
+    }
     startTransition(() => {
       onSave({
         ...values,
         description: values.description || '',
-        imageUrl: values.imageUrl || 'https://placehold.co/80x80.png'
+        imageUrl: values.imageUrl || 'https://placehold.co/80x80.png',
+        stockUpdateNote: values.stockUpdateNote
       })
     })
   }
@@ -254,12 +269,12 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description</FormLabel>
+                    <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe the item, its features, and condition."
                         className="resize-none"
-                        rows={4}
+                        rows={3}
                         {...field}
                       />
                     </FormControl>
@@ -267,6 +282,28 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
                   </FormItem>
                 )}
               />
+
+              {isStockChanged && (
+                 <FormField
+                  control={form.control}
+                  name="stockUpdateNote"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Stock Update Note</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g. Initial stock count, new shipment received, etc."
+                          className="resize-none"
+                          rows={2}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
               <div className="space-y-2">
                 <Button type="button" variant="outline" onClick={handleValidateDescription} disabled={isAiValidating}>
                   {isAiValidating ? (
