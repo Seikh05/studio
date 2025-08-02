@@ -13,12 +13,13 @@ import { CalendarIcon, MinusCircle, PlusCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import type { ItemTransaction } from '@/lib/types';
+import type { ItemTransaction, User } from '@/lib/types';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
-import { useTransition } from 'react';
+import { useTransition, useState, useEffect } from 'react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const formSchema = z.object({
   type: z.enum(['borrow', 'return'], { required_error: 'You must select a transaction type.' }),
@@ -29,10 +30,17 @@ const formSchema = z.object({
   returnDate: z.date().optional(),
   notes: z.string().optional(),
   reminder: z.boolean().default(false),
-}).refine(data => data.type === 'return' || (data.borrowerName && data.borrowerName.length > 0), {
-  message: "Borrower's name is required when borrowing an item.",
-  path: ['borrowerName'],
-}).refine(data => data.type === 'return' || (data.borrowerPhone && data.borrowerPhone.length > 0), {
+  borrowerId: z.string().optional(), // Holds user ID or "other"
+}).refine(data => {
+    if (data.type !== 'borrow') return true;
+    return (data.borrowerId !== 'other' && data.borrowerId) || (data.borrowerId === 'other' && data.borrowerName && data.borrowerName.length > 0)
+}, {
+    message: "Borrower's name is required when borrowing an item.",
+    path: ['borrowerName'],
+}).refine(data => {
+    if (data.type !== 'borrow') return true;
+    return !!data.borrowerPhone && data.borrowerPhone.length > 0;
+}, {
     message: "Borrower's phone number is required when borrowing an item.",
     path: ['borrowerPhone'],
 }).refine(data => data.type === 'return' || !!data.returnDate, {
@@ -40,14 +48,29 @@ const formSchema = z.object({
   path: ['returnDate'],
 });
 
+
 type FormData = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
   onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'isSettled' | 'quantityReturned'>) => void;
 }
 
+const USER_STORAGE_KEY = 'user-data';
+
 export function TransactionForm({ onSubmit }: TransactionFormProps) {
     const [isPending, startTransition] = useTransition();
+    const [users, setUsers] = useState<User[]>([]);
+
+    useEffect(() => {
+        try {
+            const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
+            if(storedData) {
+                setUsers(JSON.parse(storedData));
+            }
+        } catch (error) {
+            console.error("Failed to load users from storage", error);
+        }
+    }, [])
 
     const form = useForm<FormData>({
         resolver: zodResolver(formSchema),
@@ -59,15 +82,28 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             borrowerPhone: '',
             notes: '',
             reminder: false,
+            borrowerId: '',
         },
     });
 
     const transactionType = form.watch('type');
+    const borrowerId = form.watch('borrowerId');
+    const showManualBorrowerFields = borrowerId === 'other';
 
     function handleFormSubmit(values: FormData) {
         startTransition(() => {
+            const finalValues = {...values};
+            
+            // If a registered user was selected, set their name for the transaction record
+            if (finalValues.borrowerId && finalValues.borrowerId !== 'other') {
+                const selectedUser = users.find(u => u.id === finalValues.borrowerId);
+                if (selectedUser) {
+                    finalValues.borrowerName = selectedUser.name;
+                }
+            }
+
             onSubmit({
-                ...values,
+                ...finalValues,
                 returnDate: values.returnDate ? values.returnDate.toISOString() : undefined,
             });
             form.reset({
@@ -78,10 +114,26 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 borrowerRegdNum: '',
                 borrowerPhone: '',
                 notes: '',
-                returnDate: undefined
+                returnDate: undefined,
+                borrowerId: '',
             });
         });
     }
+
+    const handleBorrowerChange = (id: string) => {
+        form.setValue('borrowerId', id);
+        if (id !== 'other') {
+            const selectedUser = users.find(u => u.id === id);
+            if (selectedUser) {
+                form.setValue('borrowerName', selectedUser.name);
+                form.setValue('borrowerPhone', selectedUser.phone || '');
+            }
+        } else {
+            form.setValue('borrowerName', '');
+            form.setValue('borrowerPhone', '');
+        }
+    }
+
 
     return (
         <Form {...form}>
@@ -172,34 +224,60 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
 
                 {transactionType === 'borrow' && (
                     <>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="borrowerName"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Borrower&apos;s Name</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. John Doe" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="borrowerRegdNum"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Registration Number (Optional)</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g. 21051234" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
+                         <FormField
+                            control={form.control}
+                            name="borrowerId"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Borrower</FormLabel>
+                                    <Select onValueChange={handleBorrowerChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a registered user or 'Other'" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {users.map((user) => (
+                                            <SelectItem key={user.id} value={user.id}>{user.name} ({user.role})</SelectItem>
+                                        ))}
+                                        <SelectItem value="other">Other...</SelectItem>
+                                    </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
+                        {showManualBorrowerFields && (
+                            <div className="grid sm:grid-cols-2 gap-4 border p-4 rounded-md">
+                                <FormField
+                                    control={form.control}
+                                    name="borrowerName"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Borrower&apos;s Name</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. John Doe" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="borrowerRegdNum"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Registration Number (Optional)</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="e.g. 21051234" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        )}
                         <FormField
                             control={form.control}
                             name="borrowerPhone"
@@ -207,7 +285,11 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                 <FormItem>
                                     <FormLabel>Phone Number</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. 9876543210" {...field} />
+                                        <Input 
+                                            placeholder="e.g. 9876543210" 
+                                            {...field}
+                                            disabled={borrowerId !== 'other'}
+                                        />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>

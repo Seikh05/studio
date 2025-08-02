@@ -20,6 +20,7 @@ export type User = {
   lastLogin: string;
   avatarUrl: string;
   password?: string;
+  phone?: string;
 };
 
 export type LogEntry = {
