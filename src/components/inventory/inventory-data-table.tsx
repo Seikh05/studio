@@ -379,7 +379,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button onClick={handleOpenNew}>
+           <Button onClick={handleOpenNew} size="icon" className="md:hidden">
+            <PlusCircle className="h-4 w-4" />
+            <span className="sr-only">Add Item</span>
+          </Button>
+          <Button onClick={handleOpenNew} className="hidden md:flex">
             <PlusCircle className="mr-2 h-4 w-4" /> Add Item
           </Button>
         </div>
