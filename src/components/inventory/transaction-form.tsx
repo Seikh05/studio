@@ -237,10 +237,10 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
+                                        <SelectItem value="other">Other...</SelectItem>
                                         {users.map((user) => (
                                             <SelectItem key={user.id} value={user.id}>{user.name} ({user.role})</SelectItem>
                                         ))}
-                                        <SelectItem value="other">Other...</SelectItem>
                                     </SelectContent>
                                     </Select>
                                     <FormMessage />
