@@ -8,12 +8,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LifeBuoy, LogOut, Settings, User, Inbox, Check } from 'lucide-react';
+import { Bell, LifeBuoy, LogOut, Settings, User, Inbox, Check, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import type { User as UserType, Notification } from '@/lib/types';
 import { Badge } from '../ui/badge';
 import { formatRelative } from 'date-fns';
 import { ScrollArea } from '../ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const pathToTitle: { [key: string]: string } = {
   '/dashboard': 'Dashboard',
@@ -86,6 +87,10 @@ export function AppHeader() {
     }
     router.push('/login');
   };
+  
+  const handleRefresh = () => {
+    window.location.reload();
+  };
 
   const handleNotificationClick = (notification: Notification) => {
     // Mark as read
@@ -119,6 +124,20 @@ export function AppHeader() {
       <h1 className="text-xl font-semibold hidden md:block">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2 md:gap-4">
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full" onClick={handleRefresh}>
+                        <RefreshCw className="h-5 w-5" />
+                        <span className="sr-only">Refresh Data</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Pull Latest Changes</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full relative">
@@ -208,3 +227,5 @@ export function AppHeader() {
     </header>
   );
 }
+
+    
