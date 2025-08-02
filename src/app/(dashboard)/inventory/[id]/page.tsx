@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, LoaderCircle } from 'lucide-react';
-import type { InventoryItem, ItemTransaction } from '@/lib/types';
+import type { InventoryItem, ItemTransaction, User } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { TransactionForm } from '@/components/inventory/transaction-form';
 import { TransactionHistory } from '@/components/inventory/transaction-history';
@@ -14,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 export default function ItemLogPage() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export default function ItemLogPage() {
   const [item, setItem] = React.useState<InventoryItem | null>(null);
   const [transactions, setTransactions] = React.useState<ItemTransaction[]>([]);
   const [isClient, setIsClient] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -44,6 +46,13 @@ export default function ItemLogPage() {
       if (transactionsData) {
         setTransactions(JSON.parse(transactionsData));
       }
+
+      // Fetch current user
+      const userData = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (userData) {
+        setCurrentUser(JSON.parse(userData));
+      }
+
     } catch (error) {
       console.error('Failed to load data from localStorage', error);
       toast({
@@ -84,14 +93,14 @@ export default function ItemLogPage() {
 
 
   const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'adminAvatar' | 'returned'>) => {
-    if (!item) return;
+    if (!item || !currentUser) return;
 
     const transaction: ItemTransaction = {
       ...newTransaction,
       id: `TXN-${Date.now()}`,
       timestamp: new Date().toISOString(),
-      adminName: 'Admin User', // Replace with actual logged-in user
-      adminAvatar: 'https://placehold.co/40x40.png',
+      adminName: currentUser.name,
+      adminAvatar: currentUser.avatarUrl,
       returned: false,
     };
 
@@ -126,7 +135,7 @@ export default function ItemLogPage() {
   };
 
   const handleReturnTransaction = (borrowTransaction: ItemTransaction) => {
-    if (!item) return;
+    if (!item || !currentUser) return;
 
     // Create the new "return" transaction
     const returnTransaction: ItemTransaction = {
@@ -135,8 +144,8 @@ export default function ItemLogPage() {
         type: 'return',
         quantity: borrowTransaction.quantity,
         notes: `Return of transaction ${borrowTransaction.id}`,
-        adminName: 'Admin User', // Replace with actual logged-in user
-        adminAvatar: 'https://placehold.co/40x40.png',
+        adminName: currentUser.name,
+        adminAvatar: currentUser.avatarUrl,
         reminder: false,
         returned: false, // Not applicable for return transactions
     };
