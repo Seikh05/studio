@@ -161,12 +161,9 @@ export default function ItemLogPage() {
     };
 
     // Mark the original borrow transaction as returned and add the new return transaction
-    const updatedTransactionList = [
-      returnTransaction, 
-      ...transactions.map(t => t.id === borrowTransaction.id ? { ...t, returned: true } : t)
-    ];
-
-    const updatedTransactions = updatedTransactionList.slice(0, MAX_TRANSACTIONS_PER_ITEM);
+    const updatedTransactionList = transactions.map(t => t.id === borrowTransaction.id ? { ...t, returned: true } : t);
+    
+    const updatedTransactions = [returnTransaction, ...updatedTransactionList].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(updatedTransactions, updatedItem);
 
