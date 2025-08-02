@@ -41,6 +41,15 @@ async function getUsersData(): Promise<User[]> {
       lastLogin: '2024-07-29T08:00:00Z',
       avatarUrl: 'https://placehold.co/40x40.png',
     },
+    {
+      id: 'USR-005',
+      name: 'Super User',
+      email: 'super.user@example.com',
+      role: 'Super Admin',
+      status: 'Active',
+      lastLogin: new Date().toISOString(),
+      avatarUrl: 'https://placehold.co/40x40.png',
+    },
   ];
 }
 
