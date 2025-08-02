@@ -40,6 +40,7 @@ export type ItemTransaction = {
   adminName: string;
   adminAvatar: string;
   returned?: boolean;
+  itemName?: string;
 }
 
 // Re-exporting AI types to be used in client components

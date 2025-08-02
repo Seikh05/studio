@@ -36,7 +36,11 @@ export default function DashboardPage() {
             const transactionsData = window.localStorage.getItem(transactionsKey);
             if (transactionsData) {
               const itemTransactions: ItemTransaction[] = JSON.parse(transactionsData);
-              allTransactions.push(...itemTransactions);
+              const transactionsWithItemName = itemTransactions.map(t => ({
+                ...t,
+                itemName: item.name
+              }));
+              allTransactions.push(...transactionsWithItemName);
             }
           });
         }

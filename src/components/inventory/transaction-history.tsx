@@ -30,6 +30,22 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
     )
   }
 
+  const getTransactionTitle = (transaction: ItemTransaction) => {
+    if (transaction.type === 'borrow') {
+      let title = `Borrowed by ${transaction.borrowerName}`;
+      if (transaction.itemName) {
+        title = `${transaction.itemName} borrowed by ${transaction.borrowerName}`
+      }
+      return title;
+    }
+    
+    let title = 'Returned to stock';
+    if (transaction.itemName) {
+      title = `${transaction.itemName} returned to stock`;
+    }
+    return title;
+  }
+
   return (
     <TooltipProvider>
       <div className="flow-root">
@@ -60,9 +76,7 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                     <div>
                       <div className="text-sm">
                         <p className="font-medium text-foreground">
-                          {transaction.type === 'borrow'
-                            ? `Borrowed by ${transaction.borrowerName}`
-                            : 'Returned to stock'}
+                         {getTransactionTitle(transaction)}
                         </p>
                       </div>
                       <p className="mt-0.5 text-xs text-muted-foreground">
