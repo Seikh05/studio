@@ -52,8 +52,9 @@ declare module '@tanstack/react-table' {
 }
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  onDataChange: () => void;
 }
 
 const STORAGE_KEY = 'user-data';
@@ -61,32 +62,13 @@ const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 export function UserDataTable<TData extends User, TValue>({
   columns,
-  data: initialData,
+  data,
+  onDataChange,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
-  const [data, setData] = React.useState<TData[]>(initialData)
-  const [isClient, setIsClient] = React.useState(false)
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
 
-
   React.useEffect(() => {
-    setIsClient(true)
-    
-    const handleStorageChange = () => {
-      try {
-        const storedData = window.localStorage.getItem(STORAGE_KEY);
-        if (storedData) {
-          setData(JSON.parse(storedData));
-        } else {
-           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-        }
-      } catch (error) {
-        console.error("Failed to access localStorage", error);
-      }
-    };
-
-    handleStorageChange();
-
      try {
         const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
         if (storedUser) {
@@ -95,27 +77,7 @@ export function UserDataTable<TData extends User, TValue>({
      } catch (error) {
         console.error("Failed to get current user from localStorage", error);
      }
-
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('users-updated', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('users-updated', handleStorageChange);
-    }
-  }, [isClient, initialData]);
-
-  React.useEffect(() => {
-    if (isClient) {
-        try {
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        } catch (error) {
-            console.error("Failed to save to localStorage", error);
-        }
-    }
-  }, [data, isClient]);
-
+  }, []);
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -158,46 +120,72 @@ export function UserDataTable<TData extends User, TValue>({
   }
 
   const handleSaveUser = (formData: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => {
-    if (selectedUser) {
-      const updatedUser = {
-        ...selectedUser,
-        ...formData,
-        lastLogin: new Date().toISOString(),
-      }
-      setData(data.map((user) => (user.id === selectedUser.id ? updatedUser : user)) as TData);
-      toast({
-        title: "User Updated",
-        description: `${formData.name} has been successfully updated.`,
-      })
-    } else {
-      const newUser: User = {
-        id: `USR-${Math.floor(Math.random() * 9000) + 1000}`,
-        ...formData,
-        status: 'Active',
-        lastLogin: new Date().toISOString(),
-        avatarUrl: `https://placehold.co/40x40.png`,
-      }
-      setData([...data, newUser as TData]);
-      toast({
-        title: "User Added",
-        description: `${formData.name} has been successfully created.`,
-      })
+    try {
+        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
+        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
+
+        if (selectedUser) {
+            const updatedUser = {
+                ...selectedUser,
+                ...formData,
+                lastLogin: new Date().toISOString(),
+            };
+            const updatedUsers = existingUsers.map((user) => (user.id === selectedUser.id ? updatedUser : user));
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+            toast({
+                title: "User Updated",
+                description: `${formData.name} has been successfully updated.`,
+            });
+        } else {
+            const newUser: User = {
+                id: `USR-${Math.floor(Math.random() * 9000) + 1000}`,
+                ...formData,
+                status: 'Active',
+                lastLogin: new Date().toISOString(),
+                avatarUrl: `https://placehold.co/40x40.png`,
+            };
+            const updatedUsers = [...existingUsers, newUser];
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+            toast({
+                title: "User Added",
+                description: `${formData.name} has been successfully created.`,
+            });
+        }
+        onDataChange(); // Trigger data refresh in parent
+        setIsFormOpen(false);
+        setSelectedUser(null);
+    } catch(error) {
+        console.error("Failed to save user:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to save user data."
+        })
     }
-    window.dispatchEvent(new Event('users-updated'));
-    setIsFormOpen(false);
-    setSelectedUser(null);
   }
 
   const handleDelete = () => {
     if (!userToDelete) return;
-    setData(data.filter(user => user.id !== userToDelete.id));
-    toast({
-      title: "User Removed",
-      description: `${userToDelete.name} has been removed.`,
-    });
-    window.dispatchEvent(new Event('users-updated'));
-    setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
+     try {
+        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
+        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
+        const updatedUsers = existingUsers.filter(user => user.id !== userToDelete.id);
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+        toast({
+            title: "User Removed",
+            description: `${userToDelete.name} has been removed.`,
+        });
+        onDataChange(); // Trigger data refresh in parent
+        setIsDeleteDialogOpen(false);
+        setUserToDelete(null);
+    } catch(error) {
+         console.error("Failed to delete user:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to delete user."
+        })
+    }
   }
 
   const canAddUsers = currentUser?.role === 'Super Admin';
