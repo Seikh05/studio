@@ -66,33 +66,28 @@ export function UserDataTable<TData extends User, TValue>({
 
   React.useEffect(() => {
     setIsClient(true)
-  }, [])
-
-  React.useEffect(() => {
-    if (isClient) {
-      const handleStorageChange = () => {
-        try {
-          const storedData = window.localStorage.getItem(STORAGE_KEY);
-          if (storedData) {
-            setData(JSON.parse(storedData));
-          } else {
-             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-          }
-        } catch (error) {
-          console.error("Failed to access localStorage", error);
+    
+    const handleStorageChange = () => {
+      try {
+        const storedData = window.localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          setData(JSON.parse(storedData));
+        } else {
+           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
         }
-      };
-
-      handleStorageChange();
-
-      window.addEventListener('storage', handleStorageChange);
-      window.addEventListener('users-updated', handleStorageChange);
-
-      return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('users-updated', handleStorageChange);
+      } catch (error) {
+        console.error("Failed to access localStorage", error);
       }
+    };
 
+    handleStorageChange();
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('users-updated', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('users-updated', handleStorageChange);
     }
   }, [isClient, initialData]);
 
@@ -214,8 +209,14 @@ export function UserDataTable<TData extends User, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center gap-2 md:justify-between">
-          <div className="flex-1 md:flex-initial md:order-2">
+      <div className="flex items-center gap-2">
+            <Button onClick={handleOpenNew} className="md:hidden" size="icon">
+                <PlusCircle className="h-4 w-4" />
+                <span className="sr-only">Add User</span>
+            </Button>
+            <Button onClick={handleOpenNew} className="hidden md:flex">
+                <PlusCircle className="mr-2 h-4 w-4" /> Add User
+            </Button>
             <Input
             placeholder="Filter by name or email..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -224,16 +225,6 @@ export function UserDataTable<TData extends User, TValue>({
             }
             className="w-full md:max-w-sm"
             />
-          </div>
-          <div className="md:order-1">
-            <Button onClick={handleOpenNew} className="md:hidden" size="icon">
-                <PlusCircle className="h-4 w-4" />
-                <span className="sr-only">Add User</span>
-            </Button>
-            <Button onClick={handleOpenNew} className="hidden md:flex">
-                <PlusCircle className="mr-2 h-4 w-4" /> Add User
-            </Button>
-          </div>
       </div>
       <Card className="shadow-sm">
         <Table>
