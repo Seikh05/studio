@@ -4,12 +4,15 @@ import * as React from 'react';
 import type { LogEntry } from '@/lib/types';
 import { LogsDataTable } from '@/components/logs/logs-data-table';
 import { logsColumns } from '@/components/logs/logs-columns';
+import { isSameDay, parseISO } from 'date-fns';
 
 const STORAGE_KEY = 'logs-data';
 
 export default function LogsPage() {
-  const [data, setData] = React.useState<LogEntry[]>([]);
+  const [allLogs, setAllLogs] = React.useState<LogEntry[]>([]);
+  const [filteredLogs, setFilteredLogs] = React.useState<LogEntry[]>([]);
   const [isClient, setIsClient] = React.useState(false)
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
 
   React.useEffect(() => {
     setIsClient(true)
@@ -21,22 +24,21 @@ export default function LogsPage() {
         try {
           const storedData = window.localStorage.getItem(STORAGE_KEY);
           if (storedData) {
-            setData(JSON.parse(storedData));
+            const logs: LogEntry[] = JSON.parse(storedData)
+            logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            setAllLogs(logs);
           } else {
-            setData([]);
+            setAllLogs([]);
           }
         } catch (error) {
           console.error("Failed to access localStorage", error);
-          setData([]);
+          setAllLogs([]);
         }
       };
 
-      handleStorageChange(); // Initial load
+      handleStorageChange();
 
-      // Listen for changes from other tabs/windows
       window.addEventListener('storage', handleStorageChange);
-
-      // Listen for custom event for same-tab updates
       window.addEventListener('logs-updated', handleStorageChange);
 
       return () => {
@@ -45,11 +47,19 @@ export default function LogsPage() {
       };
     }
   }, [isClient]);
+
+  React.useEffect(() => {
+    if (!selectedDate) {
+      setFilteredLogs(allLogs);
+    } else {
+      const filtered = allLogs.filter(log => isSameDay(parseISO(log.timestamp), selectedDate));
+      setFilteredLogs(filtered);
+    }
+  }, [selectedDate, allLogs]);
   
   if (!isClient) {
-    // Render a placeholder or loading state on the server
-    return <LogsDataTable columns={logsColumns} data={[]} />;
+    return <LogsDataTable columns={logsColumns} data={[]} selectedDate={selectedDate} onDateChange={setSelectedDate} />;
   }
 
-  return <LogsDataTable columns={logsColumns} data={data} />;
+  return <LogsDataTable columns={logsColumns} data={filteredLogs} selectedDate={selectedDate} onDateChange={setSelectedDate} />;
 }
