@@ -339,7 +339,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the item
               <span className="font-semibold"> {itemToDelete?.name}</span> from your inventory.
-               To confirm, please type "confirm delete" in the box below.
+               To confirm, please type "delete" in the box below.
             </AlertDialogDescription>
           </AlertDialogHeader>
            <div className="py-2">
@@ -348,7 +348,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
               id="confirm-delete-input"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder='Type "confirm delete" to proceed'
+              placeholder='Type "delete" to proceed'
             />
           </div>
           <AlertDialogFooter>
@@ -356,7 +356,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
             <AlertDialogAction 
               onClick={handleDelete} 
               className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteConfirmText.toLowerCase() !== 'confirm delete'}
+              disabled={deleteConfirmText.toLowerCase() !== 'delete'}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
