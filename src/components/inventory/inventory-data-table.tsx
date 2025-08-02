@@ -67,43 +67,39 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
   
-  const [data, setData] = React.useState<TData[]>(() => {
-    if (typeof window === 'undefined') {
-      return initialData;
-    }
-    try {
-      const storedData = window.localStorage.getItem(STORAGE_KEY);
-      if (storedData) {
-        return JSON.parse(storedData);
-      }
-    } catch (error) {
-      console.error("Failed to read from localStorage", error);
-    }
-    return initialData;
-  });
+  const [data, setData] = React.useState<TData[]>(initialData);
+  const [isClient, setIsClient] = React.useState(false)
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-        try {
-            const storedData = window.localStorage.getItem(STORAGE_KEY);
-            if (!storedData) {
-                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
-            }
-        } catch (error) {
-            console.error("Failed to initialize localStorage", error);
+    setIsClient(true)
+  }, [])
+  
+  React.useEffect(() => {
+    if (isClient) {
+      try {
+        const storedData = window.localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          setData(JSON.parse(storedData));
+        } else {
+           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
         }
+      } catch (error) {
+        console.error("Failed to access localStorage", error);
+        // Fallback to initial data if localStorage fails
+        setData(initialData)
+      }
     }
-  }, [initialData]);
+  }, [isClient, initialData]);
 
   React.useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (isClient) {
         try {
             window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (error) {
             console.error("Failed to save to localStorage", error);
         }
     }
-  }, [data]);
+  }, [data, isClient]);
 
 
   const [sorting, setSorting] = React.useState<SortingState>([])
