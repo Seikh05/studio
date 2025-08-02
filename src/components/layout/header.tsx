@@ -1,15 +1,19 @@
 
+
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LifeBuoy, LogOut, Settings, User } from 'lucide-react';
+import { Bell, LifeBuoy, LogOut, Settings, User, Inbox } from 'lucide-react';
 import Link from 'next/link';
-import type { User as UserType } from '@/lib/types';
+import type { User as UserType, Notification } from '@/lib/types';
+import { Badge } from '../ui/badge';
+import { formatRelative } from 'date-fns';
+import { ScrollArea } from '../ui/scroll-area';
 
 const pathToTitle: { [key: string]: string } = {
   '/dashboard': 'Dashboard',
@@ -21,44 +25,58 @@ const pathToTitle: { [key: string]: string } = {
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const ALL_USERS_KEY = 'user-data';
+const NOTIFICATIONS_STORAGE_KEY = 'notifications-data';
 
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const title = pathToTitle[pathname] || 'Dashboard';
   const [user, setUser] = React.useState<UserType | null>(null);
+  const [notifications, setNotifications] = React.useState<Notification[]>([]);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const handleStorageChange = React.useCallback(() => {
+    // User data
+    try {
+      const storedUserSession = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (storedUserSession) {
+        const session = JSON.parse(storedUserSession);
+        const allUsersData = window.localStorage.getItem(ALL_USERS_KEY);
+        if (allUsersData) {
+          const allUsers: UserType[] = JSON.parse(allUsersData);
+          const fullUser = allUsers.find(u => u.id === session.id);
+          setUser(fullUser || session);
+        } else {
+          setUser(session);
+        }
+      } else {
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to retrieve user from storage", error);
+    }
+    
+    // Notifications data
+    try {
+      const storedNotifications = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+      if (storedNotifications) {
+        const parsedNotifications: Notification[] = JSON.parse(storedNotifications);
+        parsedNotifications.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setNotifications(parsedNotifications);
+      }
+    } catch (error) {
+        console.error("Failed to retrieve notifications from storage", error);
+    }
+  }, []);
 
   React.useEffect(() => {
-    const handleStorageChange = () => {
-        try {
-          const storedUserSession = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-          if (storedUserSession) {
-            const session = JSON.parse(storedUserSession);
-            // Now, get the full user profile from the master list
-            const allUsersData = window.localStorage.getItem(ALL_USERS_KEY);
-            if (allUsersData) {
-              const allUsers: UserType[] = JSON.parse(allUsersData);
-              const fullUser = allUsers.find(u => u.id === session.id);
-              setUser(fullUser || session);
-            } else {
-              setUser(session);
-            }
-          } else {
-            setUser(null);
-          }
-        } catch (error) {
-          console.error("Failed to retrieve user from storage", error);
-        }
-    };
-    
-    handleStorageChange(); // Initial load
-    
+    handleStorageChange();
     window.addEventListener('storage', handleStorageChange);
-    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     }
-  }, []);
+  }, [handleStorageChange]);
 
   const handleLogout = () => {
     try {
@@ -67,6 +85,18 @@ export function AppHeader() {
       console.error("Failed to clear user session", error);
     }
     router.push('/login');
+  };
+
+  const handleNotificationClick = (notification: Notification) => {
+    // Mark as read
+    const updatedNotifications = notifications.map(n => 
+      n.id === notification.id ? { ...n, isRead: true } : n
+    );
+    setNotifications(updatedNotifications);
+    window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updatedNotifications));
+    
+    // Navigate
+    router.push(`/inventory/${notification.itemId}`);
   };
 
   const getInitials = (name: string) => {
@@ -82,10 +112,50 @@ export function AppHeader() {
       <h1 className="text-xl font-semibold hidden md:block">{title}</h1>
 
       <div className="ml-auto flex items-center gap-2 md:gap-4">
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <Bell className="h-5 w-5" />
-            <span className="sr-only">Toggle notifications</span>
-        </Button>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full relative">
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                        <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 justify-center p-0">{unreadCount}</Badge>
+                    )}
+                    <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-80 md:w-96" align="end">
+                <DropdownMenuLabel>
+                    <div className="flex items-center justify-between">
+                        <p>Notifications</p>
+                        {unreadCount > 0 && <p className="text-xs text-muted-foreground">{unreadCount} unread</p>}
+                    </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                    <ScrollArea className="h-64">
+                    {notifications.length > 0 ? (
+                        notifications.map(notification => (
+                            <DropdownMenuItem key={notification.id} onSelect={() => handleNotificationClick(notification)} className="flex items-start gap-3 p-3 cursor-pointer">
+                                <div className={`mt-1 h-2 w-2 rounded-full ${notification.isRead ? 'bg-transparent' : 'bg-primary'}`} />
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium leading-none">{notification.message}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {formatRelative(new Date(notification.createdAt), new Date())}
+                                    </p>
+                                </div>
+                            </DropdownMenuItem>
+                        ))
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-2 text-center p-8 text-muted-foreground">
+                           <Inbox className="h-8 w-8" />
+                           <p className="font-medium">All caught up!</p>
+                           <p className="text-xs">You have no new notifications.</p>
+                        </div>
+                    )}
+                    </ScrollArea>
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">

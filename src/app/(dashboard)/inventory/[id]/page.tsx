@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ArrowLeft, LoaderCircle, Trash2 } from 'lucide-react';
-import type { InventoryItem, ItemTransaction, User } from '@/lib/types';
+import type { InventoryItem, ItemTransaction, User, Notification } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { TransactionForm } from '@/components/inventory/transaction-form';
 import { TransactionHistory } from '@/components/inventory/transaction-history';
@@ -25,9 +25,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { format } from 'date-fns';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
+const NOTIFICATIONS_STORAGE_KEY = 'notifications-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const MAX_TRANSACTIONS_PER_ITEM = 50;
 
@@ -110,6 +112,31 @@ export default function ItemLogPage() {
     }
   }
 
+  const addNotification = (transaction: ItemTransaction, item: InventoryItem) => {
+    if (!transaction.returnDate) return;
+
+    const newNotification: Notification = {
+      id: `NOTIF-${Date.now()}`,
+      itemId: item.id,
+      transactionId: transaction.id,
+      message: `${transaction.borrowerName} is due to return ${item.name} on ${format(new Date(transaction.returnDate), 'PPP')}.`,
+      dueDate: transaction.returnDate,
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    
+    try {
+      const existingNotificationsRaw = window.localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+      const existingNotifications: Notification[] = existingNotificationsRaw ? JSON.parse(existingNotificationsRaw) : [];
+      const updatedNotifications = [newNotification, ...existingNotifications];
+      window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updatedNotifications));
+      // Dispatch event to update header
+      window.dispatchEvent(new Event('storage'));
+    } catch(error) {
+        console.error("Failed to add notification", error)
+    }
+  };
+
 
   const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'returned'>) => {
     if (!item || !currentUser) return;
@@ -133,6 +160,10 @@ export default function ItemLogPage() {
         description: 'Cannot borrow more items than available in stock.',
       });
       return;
+    }
+    
+    if (transaction.type === 'borrow') {
+       addNotification(transaction, item);
     }
 
     const updatedItem: InventoryItem = {

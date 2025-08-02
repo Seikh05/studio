@@ -1,4 +1,5 @@
 
+
 export type InventoryItem = {
   id: string;
   name: string;
@@ -48,6 +49,17 @@ export type Category = {
   id: string;
   name: string;
 }
+
+export type Notification = {
+  id: string;
+  itemId: string;
+  transactionId: string;
+  message: string;
+  dueDate: string;
+  isRead: boolean;
+  createdAt: string;
+};
+
 
 // Re-exporting AI types to be used in client components
 export type {
