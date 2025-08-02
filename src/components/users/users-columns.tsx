@@ -125,7 +125,6 @@ export const usersColumns: ColumnDef<User>[] = [
                   Edit user
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem>Change permissions</DropdownMenuItem>
               {canManageUsers && !isSelf && (
                 <>
                   <DropdownMenuSeparator />
