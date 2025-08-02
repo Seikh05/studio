@@ -101,7 +101,10 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
               <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(item)}>
                 Edit item
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={() => table.options.meta?.openDeleteDialog?.(item)}
+              >
                 Delete item
               </DropdownMenuItem>
             </DropdownMenuContent>

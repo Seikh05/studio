@@ -22,10 +22,21 @@ const LastLoginCell = ({ dateString }: { dateString: string }) => {
   const [formattedDate, setFormattedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    setFormattedDate(format(new Date(dateString), "PPp"));
+    // This effect runs only on the client, avoiding hydration mismatches.
+    try {
+      // Using a try-catch block for robustness against invalid date strings
+      setFormattedDate(format(new Date(dateString), "PPp"));
+    } catch (e) {
+      setFormattedDate('Invalid date');
+    }
   }, [dateString]);
 
-  return <span>{formattedDate || 'Loading...'}</span>;
+  // Render a placeholder on the server and initial client render
+  if (!formattedDate) {
+    return <span>Loading...</span>;
+  }
+
+  return <span>{formattedDate}</span>;
 };
 
 export const usersColumns: ColumnDef<User>[] = [
@@ -112,7 +123,10 @@ export const usersColumns: ColumnDef<User>[] = [
               </DropdownMenuItem>
               <DropdownMenuItem>Change permissions</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive focus:text-destructive focus:bg-destructive/10">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                onClick={() => table.options.meta?.openDeleteDialog?.(user)}
+              >
                 Remove user
               </DropdownMenuItem>
             </DropdownMenuContent>

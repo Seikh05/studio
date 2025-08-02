@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, SlidersHorizontal } from "lucide-react"
+import { PlusCircle, SlidersHorizontal, Trash2 } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -35,10 +35,22 @@ import {
 import { ItemForm } from "./item-form"
 import type { InventoryItem } from "@/lib/types"
 import { Card } from "@/components/ui/card"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useToast } from "@/hooks/use-toast"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     openForm: (item: TData) => void
+    openDeleteDialog: (item: TData) => void
   }
 }
 
@@ -49,13 +61,17 @@ interface DataTableProps<TData, TValue> {
 
 export function InventoryDataTable<TData extends InventoryItem, TValue>({
   columns,
-  data,
+  data: initialData,
 }: DataTableProps<TData, TValue>) {
+  const { toast } = useToast()
+  const [data, setData] = React.useState(initialData)
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [isFormOpen, setIsFormOpen] = React.useState(false)
   const [selectedItem, setSelectedItem] = React.useState<TData | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+  const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
 
   const table = useReactTable({
     data,
@@ -76,6 +92,10 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       openForm: (item) => {
         setSelectedItem(item);
         setIsFormOpen(true);
+      },
+      openDeleteDialog: (item) => {
+        setItemToDelete(item);
+        setIsDeleteDialogOpen(true);
       }
     }
   })
@@ -85,6 +105,18 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     setIsFormOpen(true)
   }
 
+  const handleDelete = () => {
+    if (!itemToDelete) return;
+    // In a real app, you'd call an API to delete the item.
+    setData(data.filter(item => item.id !== itemToDelete.id));
+    toast({
+      title: "Item Deleted",
+      description: `${itemToDelete.name} has been removed from the inventory.`,
+    });
+    setIsDeleteDialogOpen(false);
+    setItemToDelete(null);
+  }
+
   return (
     <div className="space-y-4">
        <ItemForm 
@@ -92,6 +124,25 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         onOpenChange={setIsFormOpen} 
         item={selectedItem} 
       />
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this item?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the item
+              <span className="font-semibold"> {itemToDelete?.name}</span> from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Input
