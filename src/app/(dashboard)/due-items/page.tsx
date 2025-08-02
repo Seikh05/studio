@@ -142,7 +142,7 @@ export default function DueItemsPage() {
             {filteredDueItems.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {filteredDueItems.map(item => (
-                        <Link href={`/inventory/${item.itemId}`} key={item.transactionId}>
+                        <Link href={`/inventory/${item.itemId}?transactionId=${item.transactionId}`} key={item.transactionId}>
                         <Card className="h-full hover:border-primary transition-colors flex flex-col">
                             <CardContent className="p-4 flex flex-col items-center text-center flex-1">
                                 <Image 

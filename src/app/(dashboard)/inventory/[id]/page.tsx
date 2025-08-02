@@ -3,7 +3,7 @@
 'use client';
 
 import * as React from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -37,8 +37,10 @@ const MAX_TRANSACTIONS_PER_ITEM = 50;
 export default function ItemLogPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const itemId = params.id as string;
+  const highlightedTransactionId = searchParams.get('transactionId');
 
   const [item, setItem] = React.useState<InventoryItem | null>(null);
   const [transactions, setTransactions] = React.useState<ItemTransaction[]>([]);
@@ -394,7 +396,11 @@ export default function ItemLogPage() {
                   <CardDescription>A complete log of all activities for this item.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <TransactionHistory transactions={transactions} onReturn={handleOpenReturnDialog} />
+                  <TransactionHistory 
+                    transactions={transactions} 
+                    onReturn={handleOpenReturnDialog}
+                    highlightedTransactionId={highlightedTransactionId}
+                   />
                 </CardContent>
             </Card>
           </div>

@@ -20,9 +20,27 @@ import { Avatar, AvatarFallback } from '../ui/avatar'
 interface TransactionHistoryProps {
   transactions: ItemTransaction[]
   onReturn?: (transaction: ItemTransaction) => void;
+  highlightedTransactionId?: string | null;
 }
 
-export function TransactionHistory({ transactions, onReturn }: TransactionHistoryProps) {
+export function TransactionHistory({ transactions, onReturn, highlightedTransactionId }: TransactionHistoryProps) {
+  const highlightedRef = React.useRef<HTMLLIElement>(null);
+
+  React.useEffect(() => {
+    if (highlightedTransactionId && highlightedRef.current) {
+        highlightedRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+        // Add a temporary highlight class
+        highlightedRef.current.classList.add('bg-primary/10', 'ring-2', 'ring-primary/50');
+        setTimeout(() => {
+            highlightedRef.current?.classList.remove('bg-primary/10', 'ring-2', 'ring-primary/50');
+        }, 3000); // Highlight for 3 seconds
+    }
+  }, [highlightedTransactionId]);
+
+
   if (transactions.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-8">
@@ -85,7 +103,11 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
       <div className="flow-root">
         <ul role="list" className="-mb-8">
           {transactions.map((transaction, transactionIdx) => (
-            <li key={transaction.id}>
+            <li 
+                key={transaction.id} 
+                ref={transaction.id === highlightedTransactionId ? highlightedRef : null}
+                className="rounded-lg transition-colors duration-1000 -m-2 p-2"
+            >
               <div className="relative pb-8">
                 {transactionIdx !== transactions.length - 1 ? (
                   <span className="absolute left-5 top-5 -ml-px h-full w-0.5 bg-border" aria-hidden="true" />
