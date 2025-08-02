@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { useState, useTransition, useEffect } from "react"
-import { CheckCircle, AlertTriangle, LoaderCircle, UploadCloud, X, Sparkles, Camera } from "lucide-react"
+import { useState, useTransition, useEffect, useCallback } from "react"
+import { CheckCircle, AlertTriangle, LoaderCircle, UploadCloud, X, Sparkles, Camera, Info, Edit } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -55,15 +55,18 @@ interface ItemFormProps {
   onOpenChange: (isOpen: boolean) => void
   item: InventoryItem | null,
   onSave: (data: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'> & { stockUpdateNote?: string }) => void
-  categories: Category[]
+  categories: Category[],
+  inventory: InventoryItem[],
+  openEditForm: (item: InventoryItem) => void,
 }
 
-export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: ItemFormProps) {
+export function ItemForm({ isOpen, onOpenChange, item, onSave, categories, inventory, openEditForm }: ItemFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [isAiValidating, setIsAiValidating] = useState(false)
   const [aiValidationResult, setAiValidationResult] = useState<ValidateDescriptionConsistencyOutput | null>(null)
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [suggestedItem, setSuggestedItem] = useState<InventoryItem | null>(null);
 
 
   const form = useForm<FormData>({
@@ -80,33 +83,60 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
 
   const imagePreview = form.watch("imageUrl");
   const stockValue = form.watch("stock");
+  const nameValue = form.watch("name");
   
   const isStockChanged = item ? item.stock !== stockValue : false;
   
+  const resetForm = useCallback((currentItem: InventoryItem | null) => {
+    if (currentItem) {
+      form.reset({
+        name: currentItem.name,
+        category: currentItem.category,
+        stock: currentItem.stock,
+        description: currentItem.description,
+        imageUrl: currentItem.imageUrl,
+        stockUpdateNote: "",
+      });
+    } else {
+      form.reset({
+        name: "",
+        category: "",
+        stock: 0,
+        description: "",
+        imageUrl: "",
+        stockUpdateNote: "",
+      });
+    }
+    setAiValidationResult(null);
+    setSuggestedItem(null);
+  }, [form]);
+
   useEffect(() => {
     if (isOpen) {
-        if (item) {
-        form.reset({
-            name: item.name,
-            category: item.category,
-            stock: item.stock,
-            description: item.description,
-            imageUrl: item.imageUrl,
-            stockUpdateNote: "",
-        })
-        } else {
-        form.reset({
-            name: "",
-            category: "",
-            stock: 0,
-            description: "",
-            imageUrl: "",
-            stockUpdateNote: "",
-        })
-        }
-        setAiValidationResult(null)
+        resetForm(item);
     }
-  }, [item, form, isOpen])
+  }, [item, isOpen, resetForm]);
+
+  useEffect(() => {
+    if (!nameValue || item) {
+      setSuggestedItem(null);
+      return;
+    }
+    
+    const lowercasedName = nameValue.toLowerCase().trim();
+    if (lowercasedName.length < 3) {
+      setSuggestedItem(null);
+      return;
+    }
+
+    const foundItem = inventory.find(
+      (invItem) => invItem.name.toLowerCase() === lowercasedName
+    );
+
+    setSuggestedItem(foundItem || null);
+
+  }, [nameValue, inventory, item]);
+
 
   const handleValidateDescription = async () => {
     const { description, category, name } = form.getValues()
@@ -174,6 +204,16 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
     setIsCameraOpen(false);
   };
   
+  const handleUpdateExisting = () => {
+    if (suggestedItem) {
+        onOpenChange(false); // Close current dialog
+        // This slight delay ensures the close animation completes before opening the new one
+        setTimeout(() => {
+            openEditForm(suggestedItem);
+        }, 100);
+    }
+  }
+
   return (
     <>
       <CameraCapture 
@@ -191,7 +231,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <ScrollArea className="h-[60vh] pr-6">
+              <ScrollArea className="h-[65vh] pr-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
                   <div className="md:col-span-1 space-y-4">
                     <div>
@@ -235,6 +275,24 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
                   </div>
 
                   <div className="md:col-span-2 space-y-4">
+                     {suggestedItem && (
+                        <Alert>
+                           <Info className="h-4 w-4" />
+                            <AlertTitle className="font-semibold">Did you mean...?</AlertTitle>
+                             <AlertDescription>
+                                An item named <strong>{suggestedItem.name}</strong> already exists. You can update it or continue to create a new one.
+                             </AlertDescription>
+                             <div className="mt-3 flex gap-2">
+                                <Button type="button" size="sm" onClick={handleUpdateExisting}>
+                                   <Edit className="mr-2 h-3 w-3" />
+                                    Update Existing Item
+                                </Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setSuggestedItem(null)}>
+                                    Dismiss
+                                </Button>
+                             </div>
+                        </Alert>
+                    )}
                     <FormField
                       control={form.control}
                       name="name"
@@ -347,7 +405,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
               </ScrollArea>
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
-                <Button type="submit" disabled={isPending}>
+                <Button type="submit" disabled={isPending || !!suggestedItem}>
                   {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
                   {item ? "Save Changes" : "Create Item"}
                 </Button>

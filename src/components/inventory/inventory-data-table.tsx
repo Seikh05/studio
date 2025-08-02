@@ -223,6 +223,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     }
   }, [isMobile])
 
+  const openForm = (item: TData | null) => {
+    setSelectedItem(item);
+    setIsFormOpen(true);
+  }
+
   const table = useReactTable({
     data,
     columns,
@@ -239,10 +244,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       columnVisibility,
     },
     meta: {
-      openForm: (item) => {
-        setSelectedItem(item);
-        setIsFormOpen(true);
-      },
+      openForm: (item) => openForm(item),
       openDeleteDialog: (item) => {
         setItemToDelete(item);
         setDeleteConfirmText("");
@@ -337,6 +339,8 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         item={selectedItem}
         onSave={handleSaveItem}
         categories={categories}
+        inventory={data}
+        openEditForm={openForm}
       />
       <CategoryManager 
         isOpen={isCategoryManagerOpen}
