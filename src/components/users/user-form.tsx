@@ -3,8 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import { useTransition, useEffect } from "react"
-import { LoaderCircle } from "lucide-react"
+import { useTransition, useEffect, useState } from "react"
+import { LoaderCircle, Eye, EyeOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -38,6 +38,7 @@ const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
   email: z.string().email("Please enter a valid email address."),
   role: z.enum(["Admin", "Super Admin"]),
+  password: z.string().min(8, "Password must be at least 8 characters.").optional().or(z.literal('')),
 })
 
 interface UserFormProps {
@@ -49,6 +50,7 @@ interface UserFormProps {
 export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
+  const [showPassword, setShowPassword] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,6 +58,7 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
       name: "",
       email: "",
       role: "Admin",
+      password: "",
     },
   })
   
@@ -66,18 +69,25 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                password: "", // Don't pre-fill password for existing users
             })
         } else {
             form.reset({
                 name: "",
                 email: "",
                 role: "Admin",
+                password: "",
             })
         }
     }
   }, [user, form, isOpen])
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
+    if (!user && !values.password) {
+        form.setError("password", { type: "manual", message: "Password is required for new users." });
+        return;
+    }
+
     startTransition(() => {
       // Simulate API call
       console.log("User form submitted:", values)
@@ -95,7 +105,7 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
         <DialogHeader>
           <DialogTitle>{user ? "Edit User" : "Add New User"}</DialogTitle>
           <DialogDescription>
-            {user ? "Update the user's details and role." : "Fill in the details for the new user."}
+            {user ? "Update the user's details and role. Leave password blank to keep it unchanged." : "Fill in the details for the new user."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -126,6 +136,36 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
                 </FormItem>
               )}
             />
+             <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input 
+                          type={showPassword ? "text" : "password"} 
+                          placeholder="••••••••" 
+                          {...field}
+                          autoComplete="new-password"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground hover:bg-transparent"
+                          onClick={() => setShowPassword(!showPassword)}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <FormField
               control={form.control}
               name="role"
