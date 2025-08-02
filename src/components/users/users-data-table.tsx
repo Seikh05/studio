@@ -41,6 +41,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { Label } from "../ui/label"
 
 
 declare module '@tanstack/react-table' {
@@ -122,6 +123,8 @@ export function UserDataTable<TData extends User, TValue>({
   const [selectedUser, setSelectedUser] = React.useState<TData | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [userToDelete, setUserToDelete] = React.useState<TData | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
+
 
   const table = useReactTable({
     data,
@@ -143,6 +146,7 @@ export function UserDataTable<TData extends User, TValue>({
       },
       openDeleteDialog: (user) => {
         setUserToDelete(user);
+        setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
       }
     }
@@ -214,11 +218,25 @@ export function UserDataTable<TData extends User, TValue>({
             <AlertDialogDescription>
               This action cannot be undone. This will permanently remove the user
                <span className="font-semibold"> {userToDelete?.name}</span>.
+               To confirm, please type "confirm" in the box below.
             </AlertDialogDescription>
           </AlertDialogHeader>
+           <div className="py-2">
+            <Label htmlFor="confirm-delete-input" className="sr-only">Confirm Delete</Label>
+            <Input 
+              id="confirm-delete-input"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder='Type "confirm" to proceed'
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteConfirmText.toLowerCase() !== 'confirm'}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Remove
             </AlertDialogAction>
