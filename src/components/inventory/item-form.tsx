@@ -44,20 +44,23 @@ const formSchema = z.object({
   description: z.string().min(10, "Description must be at least 10 characters long."),
 })
 
+type FormData = z.infer<typeof formSchema>
+
 interface ItemFormProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
-  item: InventoryItem | null
+  item: InventoryItem | null,
+  onSave: (data: FormData) => void
 }
 
-export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
+export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [isAiValidating, setIsAiValidating] = useState(false)
   const [aiValidationResult, setAiValidationResult] = useState<ValidateDescriptionConsistencyOutput | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(item?.imageUrl ?? null)
 
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -129,15 +132,9 @@ export function ItemForm({ isOpen, onOpenChange, item }: ItemFormProps) {
     }
   };
 
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: FormData) => {
     startTransition(() => {
-      // Simulate API call to save data
-      console.log("Form submitted:", values)
-      toast({
-        title: item ? "Item Updated" : "Item Added",
-        description: `${values.name} has been successfully saved.`,
-      })
-      onOpenChange(false)
+      onSave(values)
     })
   }
   

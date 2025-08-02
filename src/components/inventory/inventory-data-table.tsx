@@ -104,6 +104,43 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     setSelectedItem(null)
     setIsFormOpen(true)
   }
+  
+  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status' | 'imageUrl'>) => {
+    // This is a client-side only implementation.
+    // In a real app, you'd call an API to save the data.
+    if (selectedItem) {
+      // Update existing item
+      const updatedItem = {
+        ...selectedItem,
+        ...formData,
+        stock: Number(formData.stock),
+        lastUpdated: new Date().toISOString(),
+        status: Number(formData.stock) > 0 ? (Number(formData.stock) < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
+      }
+      setData(data.map((item) => (item.id === selectedItem.id ? updatedItem : item) as TData));
+      toast({
+        title: "Item Updated",
+        description: `${formData.name} has been successfully updated.`,
+      })
+    } else {
+      // Add new item
+      const newItem: InventoryItem = {
+        id: `ITEM-${Math.floor(Math.random() * 9000) + 1000}`,
+        ...formData,
+        stock: Number(formData.stock),
+        status: Number(formData.stock) > 0 ? (Number(formData.stock) < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
+        imageUrl: 'https://placehold.co/80x80.png',
+        lastUpdated: new Date().toISOString(),
+      }
+      setData([...data, newItem as TData]);
+      toast({
+        title: "Item Added",
+        description: `${formData.name} has been successfully created.`,
+      })
+    }
+    setIsFormOpen(false);
+    setSelectedItem(null);
+  }
 
   const handleDelete = () => {
     if (!itemToDelete) return;
@@ -122,7 +159,8 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
        <ItemForm 
         isOpen={isFormOpen} 
         onOpenChange={setIsFormOpen} 
-        item={selectedItem} 
+        item={selectedItem}
+        onSave={handleSaveItem}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
