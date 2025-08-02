@@ -31,19 +31,20 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
   }
 
   const getTransactionTitle = (transaction: ItemTransaction) => {
+    const byAdmin = `by ${transaction.adminName}`;
     if (transaction.type === 'borrow') {
       let title = `Borrowed by ${transaction.borrowerName}`;
       if (transaction.itemName) {
         title = `${transaction.itemName} borrowed by ${transaction.borrowerName}`
       }
-      return title;
+      return `${title} (approved ${byAdmin})`;
     }
     
     let title = 'Returned to stock';
     if (transaction.itemName) {
       title = `${transaction.itemName} returned to stock`;
     }
-    return title;
+    return `${title} (logged ${byAdmin})`;
   }
 
   return (
@@ -125,15 +126,21 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                           </TooltipContent>
                         </Tooltip>
                       )}
-                      <Image
-                          src={transaction.adminAvatar}
-                          alt={transaction.adminName}
-                          width={24}
-                          height={24}
-                          className="rounded-full"
-                          title={`Logged by ${transaction.adminName}`}
-                          data-ai-hint="person avatar"
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                           <Image
+                              src={transaction.adminAvatar}
+                              alt={transaction.adminName}
+                              width={24}
+                              height={24}
+                              className="rounded-full"
+                              data-ai-hint="person avatar"
+                          />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                           <p>Logged by {transaction.adminName}</p>
+                        </TooltipContent>
+                      </Tooltip>
                   </div>
                 </div>
               </div>
