@@ -76,6 +76,7 @@ export const usersColumns: ColumnDef<User>[] = [
   {
     accessorKey: "status",
     header: "Status",
+    enableHiding: true,
     cell: ({ row }) => {
       const status = row.getValue("status") as string
       const variant: "default" | "secondary" =
@@ -111,6 +112,7 @@ export const usersColumns: ColumnDef<User>[] = [
   {
     accessorKey: "lastLogin",
     header: "Last Login",
+    enableHiding: true,
     cell: LastLoginCell,
   },
   {
