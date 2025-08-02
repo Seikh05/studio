@@ -99,11 +99,11 @@ export function AppSidebar() {
                 </div>
                 <span
                     className={cn(
-                    'font-semibold text-xl transition-opacity duration-200',
+                    'font-semibold text-lg transition-opacity duration-200',
                     state === 'collapsed' && 'opacity-0'
                     )}
                 >
-                    Robostreaks
+                    Robostreaks Inventory
                 </span>
             </div>
         </div>

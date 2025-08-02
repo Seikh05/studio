@@ -16,7 +16,7 @@ export default function LoginPage() {
              />
           </div>
         </div>
-        <h1 className="text-3xl font-bold text-center mb-2 text-foreground">Robostreaks</h1>
+        <h1 className="text-3xl font-bold text-center mb-2 text-foreground">Robostreaks Inventory</h1>
         <p className="text-center text-muted-foreground mb-8">
           Welcome back! Sign in to manage your inventory.
         </p>
