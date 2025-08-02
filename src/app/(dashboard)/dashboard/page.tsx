@@ -4,10 +4,11 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TransactionHistory } from '@/components/inventory/transaction-history';
 import type { ItemTransaction, InventoryItem } from '@/lib/types';
-import { LoaderCircle } from 'lucide-react';
-import { Package, Users, ArrowRightLeft } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format, getMonth, getYear, parseISO } from 'date-fns';
+import { LoaderCircle, Package, Users, ArrowRightLeft, Calendar as CalendarIcon, X } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { format, isSameDay, parseISO } from 'date-fns';
 
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
@@ -16,10 +17,10 @@ const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
 export default function DashboardPage() {
   const [allTransactions, setAllTransactions] = React.useState<ItemTransaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = React.useState<ItemTransaction[]>([]);
-  const [stats, setStats] = React.useState({ totalItems: 0, lowStock: 0, outOfStock: 0, totalUsers: 0, totalTransactions: 0 });
+  const [stats, setStats] = React.useState({ totalItems: 0, lowStock: 0, outOfStock: 0, totalUsers: 0 });
   const [isClient, setIsClient] = React.useState(false);
-  const [availableMonths, setAvailableMonths] = React.useState<string[]>([]);
-  const [selectedMonth, setSelectedMonth] = React.useState<string>('all');
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [filteredTransactionCount, setFilteredTransactionCount] = React.useState(0);
 
 
   React.useEffect(() => {
@@ -59,22 +60,13 @@ export default function DashboardPage() {
         
         setAllTransactions(transactions);
         setFilteredTransactions(transactions.slice(0,5)); // Initially show latest 5
+        setFilteredTransactionCount(transactions.length);
         setStats({ 
             totalItems, 
             lowStock, 
             outOfStock, 
             totalUsers,
-            totalTransactions: transactions.length,
         });
-
-        // Populate month filter
-        const months = new Set<string>();
-        transactions.forEach(t => {
-            const date = parseISO(t.timestamp);
-            months.add(`${getYear(date)}-${getMonth(date)}`);
-        });
-        setAvailableMonths(Array.from(months));
-
 
       } catch (error) {
         console.error('Failed to load dashboard data from localStorage', error);
@@ -83,17 +75,15 @@ export default function DashboardPage() {
   }, []);
 
   React.useEffect(() => {
-    if (selectedMonth === 'all') {
+    if (!selectedDate) {
       setFilteredTransactions(allTransactions.slice(0, 5));
+      setFilteredTransactionCount(allTransactions.length);
     } else {
-      const [year, month] = selectedMonth.split('-').map(Number);
-      const filtered = allTransactions.filter(t => {
-        const date = parseISO(t.timestamp);
-        return getYear(date) === year && getMonth(date) === month;
-      });
+      const filtered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
       setFilteredTransactions(filtered);
+      setFilteredTransactionCount(filtered.length);
     }
-  }, [selectedMonth, allTransactions]);
+  }, [selectedDate, allTransactions]);
 
 
   if (!isClient) {
@@ -133,8 +123,10 @@ export default function DashboardPage() {
                     <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalTransactions}</div>
-                    <p className="text-xs text-muted-foreground">Borrows and returns logged</p>
+                    <div className="text-2xl font-bold">{filteredTransactionCount}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedDate ? `On ${format(selectedDate, 'PPP')}` : 'Borrows and returns logged'}
+                    </p>
                 </CardContent>
             </Card>
              <Card>
@@ -151,23 +143,37 @@ export default function DashboardPage() {
       <Card>
         <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>A log of the most recent inventory transactions.</CardDescription>
+              <CardTitle>Activity Log</CardTitle>
+              <CardDescription>
+                {selectedDate ? `Transactions for ${format(selectedDate, 'PPP')}` : 'Most recent inventory transactions.'}
+              </CardDescription>
             </div>
-            <div className="mt-4 sm:mt-0 sm:w-48">
-               <Select onValueChange={setSelectedMonth} value={selectedMonth}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Filter by month" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Recent</SelectItem>
-                  {availableMonths.map(monthStr => {
-                     const [year, month] = monthStr.split('-');
-                     const date = new Date(Number(year), Number(month));
-                     return <SelectItem key={monthStr} value={monthStr}>{format(date, 'MMMM yyyy')}</SelectItem>
-                  })}
-                </SelectContent>
-              </Select>
+            <div className="mt-4 sm:mt-0 flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="w-full sm:w-56 justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {selectedDate ? format(selectedDate, "PPP") : <span>Filter by date...</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      onSelect={setSelectedDate}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+                {selectedDate && (
+                  <Button variant="ghost" size="icon" onClick={() => setSelectedDate(undefined)}>
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Reset</span>
+                  </Button>
+                )}
             </div>
         </CardHeader>
         <CardContent>
