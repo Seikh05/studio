@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from 'react'
@@ -5,7 +6,6 @@ import { format, formatRelative } from 'date-fns'
 import { AlertCircle, ArrowDownLeft, ArrowUpRight, Bell, Calendar, Undo2 } from 'lucide-react'
 import type { ItemTransaction } from '@/lib/types'
 import { cn } from '@/lib/utils'
-import Image from 'next/image'
 import { Button } from '../ui/button'
 import {
   Tooltip,
@@ -134,20 +134,9 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Avatar className='h-6 w-6'>
-                            {transaction.adminAvatar ? (
-                               <Image
-                                  src={transaction.adminAvatar}
-                                  alt={transaction.adminName}
-                                  width={24}
-                                  height={24}
-                                  className="rounded-full"
-                                  data-ai-hint="person avatar"
-                              />
-                            ) : (
-                              <AvatarFallback className='text-[10px]'>
+                            <AvatarFallback className='text-[10px]'>
                                 {getInitials(transaction.adminName)}
-                              </AvatarFallback>
-                            )}
+                            </AvatarFallback>
                           </Avatar>
                         </TooltipTrigger>
                         <TooltipContent>
