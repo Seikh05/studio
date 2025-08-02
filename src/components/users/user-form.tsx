@@ -41,13 +41,16 @@ const formSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters.").optional().or(z.literal('')),
 })
 
+type FormData = z.infer<typeof formSchema>
+
 interface UserFormProps {
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
-  user: User | null
+  user: User | null,
+  onSave: (data: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => void
 }
 
-export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
+export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [showPassword, setShowPassword] = useState(false)
@@ -89,13 +92,12 @@ export function UserForm({ isOpen, onOpenChange, user }: UserFormProps) {
     }
 
     startTransition(() => {
-      // Simulate API call
-      console.log("User form submitted:", values)
-      toast({
-        title: user ? "User Updated" : "User Added",
-        description: `${values.name} has been successfully saved.`,
-      })
-      onOpenChange(false)
+      const dataToSave = { ...values };
+      if (!dataToSave.password) {
+        // @ts-ignore
+        delete dataToSave.password;
+      }
+      onSave(dataToSave)
     })
   }
   

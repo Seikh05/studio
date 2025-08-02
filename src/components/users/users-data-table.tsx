@@ -54,12 +54,47 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
+const STORAGE_KEY = 'user-data';
+
 export function UserDataTable<TData extends User, TValue>({
   columns,
   data: initialData,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
-  const [data, setData] = React.useState(initialData)
+  const [data, setData] = React.useState<TData[]>(initialData)
+  const [isClient, setIsClient] = React.useState(false)
+
+  React.useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  React.useEffect(() => {
+    if (isClient) {
+      try {
+        const storedData = window.localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          setData(JSON.parse(storedData));
+        } else {
+           window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+        }
+      } catch (error) {
+        console.error("Failed to access localStorage", error);
+        setData(initialData)
+      }
+    }
+  }, [isClient, initialData]);
+
+  React.useEffect(() => {
+    if (isClient) {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error("Failed to save to localStorage", error);
+        }
+    }
+  }, [data, isClient]);
+
+
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [isFormOpen, setIsFormOpen] = React.useState(false)
@@ -97,9 +132,38 @@ export function UserDataTable<TData extends User, TValue>({
     setIsFormOpen(true)
   }
 
+  const handleSaveUser = (formData: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => {
+    if (selectedUser) {
+      const updatedUser = {
+        ...selectedUser,
+        ...formData,
+        lastLogin: new Date().toISOString(),
+      }
+      setData(data.map((user) => (user.id === selectedUser.id ? updatedUser : user)) as TData);
+      toast({
+        title: "User Updated",
+        description: `${formData.name} has been successfully updated.`,
+      })
+    } else {
+      const newUser: User = {
+        id: `USR-${Math.floor(Math.random() * 9000) + 1000}`,
+        ...formData,
+        status: 'Active',
+        lastLogin: new Date().toISOString(),
+        avatarUrl: `https://placehold.co/40x40.png`,
+      }
+      setData([...data, newUser as TData]);
+      toast({
+        title: "User Added",
+        description: `${formData.name} has been successfully created.`,
+      })
+    }
+    setIsFormOpen(false);
+    setSelectedUser(null);
+  }
+
   const handleDelete = () => {
     if (!userToDelete) return;
-    // In a real app, you'd call an API to delete the user.
     setData(data.filter(user => user.id !== userToDelete.id));
     toast({
       title: "User Removed",
@@ -115,6 +179,7 @@ export function UserDataTable<TData extends User, TValue>({
         isOpen={isFormOpen}
         onOpenChange={setIsFormOpen}
         user={selectedUser}
+        onSave={handleSaveUser}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
