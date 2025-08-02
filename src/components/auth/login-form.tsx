@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@/lib/types"
 
@@ -66,6 +65,20 @@ export function LoginForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     
+    // Listen for storage changes to get the latest user list
+     const handleStorageChange = () => {
+        try {
+            const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
+            if (storedData) {
+                setUsers(JSON.parse(storedData));
+            }
+        } catch (error) {
+            console.error("Failed to read users from localStorage", error);
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+
+
     setTimeout(() => {
       const user = users.find(u => u.email === values.email);
 
@@ -76,8 +89,6 @@ export function LoginForm() {
             // Create a session object without the password or other large data
             const sessionUser = { ...user };
             delete sessionUser.password;
-            // Don't store large image data in the session to avoid quota issues
-            // We'll fetch the full profile on the dashboard/layout instead
             
             window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
             
@@ -109,14 +120,13 @@ export function LoginForm() {
         })
         setIsLoading(false)
       }
+      window.removeEventListener('storage', handleStorageChange);
     }, 1000)
   }
 
   return (
-    <Card>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 pt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-6">
             <FormField
               control={form.control}
               name="email"
@@ -159,15 +169,11 @@ export function LoginForm() {
                 </FormItem>
               )}
             />
-          </CardContent>
-          <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
-          </CardFooter>
         </form>
       </Form>
-    </Card>
   )
 }
