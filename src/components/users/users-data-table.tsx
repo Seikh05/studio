@@ -42,6 +42,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { Label } from "../ui/label"
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip"
 
 
 declare module '@tanstack/react-table' {
@@ -351,7 +352,7 @@ export function UserDataTable<TData extends User, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col md:flex-row md:items-center gap-2">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <Input
             placeholder="Filter by name or email..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -362,13 +363,22 @@ export function UserDataTable<TData extends User, TValue>({
             />
             <div className="flex items-center gap-2">
                  {canApproveUsers && pendingUsersCount > 0 && (
-                    <Button variant={showPendingOnly ? "default" : "outline"} onClick={() => setShowPendingOnly(!showPendingOnly)}>
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Pending Approvals
-                        <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
-                            {pendingUsersCount}
-                        </span>
-                    </Button>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                         <Button variant={showPendingOnly ? "default" : "outline"} onClick={() => setShowPendingOnly(!showPendingOnly)} className="relative">
+                            <UserCheck className="md:mr-2 h-4 w-4" />
+                            <span className="hidden md:inline">Pending Approvals</span>
+                            <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
+                                {pendingUsersCount}
+                            </span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="md:hidden">
+                        <p>Pending Approvals</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
                  {canAddUsers && (
                     <>
