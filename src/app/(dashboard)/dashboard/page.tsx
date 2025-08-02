@@ -6,20 +6,27 @@ import { TransactionHistory } from '@/components/inventory/transaction-history';
 import type { ItemTransaction, InventoryItem } from '@/lib/types';
 import { LoaderCircle } from 'lucide-react';
 import { Package, Users, ArrowRightLeft } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { format, getMonth, getYear, parseISO } from 'date-fns';
+
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
 
 export default function DashboardPage() {
-  const [transactions, setTransactions] = React.useState<ItemTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = React.useState<ItemTransaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = React.useState<ItemTransaction[]>([]);
   const [stats, setStats] = React.useState({ totalItems: 0, lowStock: 0, outOfStock: 0, totalUsers: 0, totalTransactions: 0 });
   const [isClient, setIsClient] = React.useState(false);
+  const [availableMonths, setAvailableMonths] = React.useState<string[]>([]);
+  const [selectedMonth, setSelectedMonth] = React.useState<string>('all');
+
 
   React.useEffect(() => {
     setIsClient(true);
     if (typeof window !== 'undefined') {
       try {
-        const allTransactions: ItemTransaction[] = [];
+        const transactions: ItemTransaction[] = [];
         let totalItems = 0;
         let lowStock = 0;
         let outOfStock = 0;
@@ -40,7 +47,7 @@ export default function DashboardPage() {
                 ...t,
                 itemName: item.name
               }));
-              allTransactions.push(...transactionsWithItemName);
+              transactions.push(...transactionsWithItemName);
             }
           });
         }
@@ -48,22 +55,46 @@ export default function DashboardPage() {
         const usersData = window.localStorage.getItem('user-data');
         const totalUsers = usersData ? JSON.parse(usersData).length : 0;
 
-        allTransactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         
-        setTransactions(allTransactions.slice(0, 5));
+        setAllTransactions(transactions);
+        setFilteredTransactions(transactions.slice(0,5)); // Initially show latest 5
         setStats({ 
             totalItems, 
             lowStock, 
             outOfStock, 
             totalUsers,
-            totalTransactions: allTransactions.length,
+            totalTransactions: transactions.length,
         });
+
+        // Populate month filter
+        const months = new Set<string>();
+        transactions.forEach(t => {
+            const date = parseISO(t.timestamp);
+            months.add(`${getYear(date)}-${getMonth(date)}`);
+        });
+        setAvailableMonths(Array.from(months));
+
 
       } catch (error) {
         console.error('Failed to load dashboard data from localStorage', error);
       }
     }
   }, []);
+
+  React.useEffect(() => {
+    if (selectedMonth === 'all') {
+      setFilteredTransactions(allTransactions.slice(0, 5));
+    } else {
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const filtered = allTransactions.filter(t => {
+        const date = parseISO(t.timestamp);
+        return getYear(date) === year && getMonth(date) === month;
+      });
+      setFilteredTransactions(filtered);
+    }
+  }, [selectedMonth, allTransactions]);
+
 
   if (!isClient) {
     return (
@@ -118,12 +149,29 @@ export default function DashboardPage() {
             </Card>
        </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>A log of the most recent inventory transactions.</CardDescription>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>Recent Activity</CardTitle>
+              <CardDescription>A log of the most recent inventory transactions.</CardDescription>
+            </div>
+            <div className="mt-4 sm:mt-0 sm:w-48">
+               <Select onValueChange={setSelectedMonth} value={selectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Filter by month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Recent</SelectItem>
+                  {availableMonths.map(monthStr => {
+                     const [year, month] = monthStr.split('-');
+                     const date = new Date(Number(year), Number(month));
+                     return <SelectItem key={monthStr} value={monthStr}>{format(date, 'MMMM yyyy')}</SelectItem>
+                  })}
+                </SelectContent>
+              </Select>
+            </div>
         </CardHeader>
         <CardContent>
-          <TransactionHistory transactions={transactions} />
+          <TransactionHistory transactions={filteredTransactions} />
         </CardContent>
       </Card>
     </div>
