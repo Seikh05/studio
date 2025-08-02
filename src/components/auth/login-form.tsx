@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { useRouter } from 'next/navigation'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Eye, EyeOff, LoaderCircle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -33,6 +33,25 @@ export function LoginForm() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    // This runs on the client, after hydration
+    try {
+      const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
+      if (storedData) {
+        setUsers(JSON.parse(storedData));
+      }
+    } catch (error) {
+      console.error("Failed to read users from localStorage", error);
+      toast({
+        variant: "destructive",
+        title: "System Error",
+        description: "Could not retrieve user data.",
+      })
+    }
+  }, [toast]);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -46,28 +65,11 @@ export function LoginForm() {
     setIsLoading(true)
     
     setTimeout(() => {
-      let users: User[] = [];
-      try {
-        const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
-        if (storedData) {
-          users = JSON.parse(storedData);
-        }
-      } catch (error) {
-        console.error("Failed to read users from localStorage", error);
-        toast({
-          variant: "destructive",
-          title: "Login Error",
-          description: "Could not retrieve user data. Please try again.",
-        })
-        setIsLoading(false);
-        return;
-      }
-      
       const user = users.find(u => u.email === values.email);
 
-      // For this demo, all passwords are 'password'. 
-      // In a real app, you would have hashed passwords.
-      if (user && values.password === "password") {
+      // In this demo, the password is either the plain-text 'password' (for original users)
+      // or it matches the password set in the user form (for new users).
+      if (user && (user.password === values.password || values.password === 'password')) {
         router.push("/inventory")
       } else {
         toast({
