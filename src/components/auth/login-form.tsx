@@ -19,11 +19,14 @@ import {
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import type { User } from "@/lib/types"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(1, { message: "Password is required." }),
 })
+
+const USER_STORAGE_KEY = 'user-data';
 
 export function LoginForm() {
   const router = useRouter()
@@ -41,15 +44,30 @@ export function LoginForm() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
-    // Simulate API call
+    
     setTimeout(() => {
-      const allowedEmails = [
-        "admin@example.com", 
-        "superadmin@example.com",
-        "seikhsouvagyamustakim@gmail.com"
-      ];
-      // Dummy credentials for demonstration
-      if (allowedEmails.includes(values.email) && values.password === "password") {
+      let users: User[] = [];
+      try {
+        const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
+        if (storedData) {
+          users = JSON.parse(storedData);
+        }
+      } catch (error) {
+        console.error("Failed to read users from localStorage", error);
+        toast({
+          variant: "destructive",
+          title: "Login Error",
+          description: "Could not retrieve user data. Please try again.",
+        })
+        setIsLoading(false);
+        return;
+      }
+      
+      const user = users.find(u => u.email === values.email);
+
+      // For this demo, all passwords are 'password'. 
+      // In a real app, you would have hashed passwords.
+      if (user && values.password === "password") {
         router.push("/inventory")
       } else {
         toast({
@@ -59,7 +77,7 @@ export function LoginForm() {
         })
         setIsLoading(false)
       }
-    }, 1500)
+    }, 1000)
   }
 
   return (
