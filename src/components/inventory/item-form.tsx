@@ -283,7 +283,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories, inven
                              <AlertDescription>
                                 An item named <strong>{suggestedItem.name}</strong> already exists. You can update it or continue to create a new one.
                              </AlertDescription>
-                             <div className="mt-3 flex gap-2">
+                             <div className="mt-3 flex flex-wrap gap-2">
                                 <Button type="button" size="sm" onClick={handleUpdateExisting}>
                                    <Edit className="mr-2 h-3 w-3" />
                                     Update Existing Item
