@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -22,6 +23,7 @@ import type { User as UserType } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
+const ALL_USERS_KEY = 'user-data';
 
 export function AppSidebar() {
   const pathname = usePathname();
@@ -32,9 +34,18 @@ export function AppSidebar() {
   React.useEffect(() => {
     const handleStorageChange = () => {
         try {
-          const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-          if (storedUser) {
-            setUser(JSON.parse(storedUser));
+          const storedUserSession = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+          if (storedUserSession) {
+            const session = JSON.parse(storedUserSession);
+             // Now, get the full user profile from the master list
+            const allUsersData = window.localStorage.getItem(ALL_USERS_KEY);
+            if (allUsersData) {
+              const allUsers: UserType[] = JSON.parse(allUsersData);
+              const fullUser = allUsers.find(u => u.id === session.id);
+              setUser(fullUser || session);
+            } else {
+              setUser(session);
+            }
           } else {
             setUser(null);
           }
