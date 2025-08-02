@@ -8,7 +8,7 @@ body {
 
 @layer base {
   :root {
-    --background: 220 17% 95%;
+    --background: 240 10% 98%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
@@ -29,12 +29,12 @@ body {
     --ring: 246 74% 62%;
     --radius: 0.5rem;
 
-    --sidebar-background: 238 28% 14% / 0.8;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-accent: 238 28% 24% / 0.8;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 238 28% 24%;
-    --sidebar-ring: 246 100% 77%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 240 10% 3.9%;
+    --sidebar-accent: 220 14% 90%;
+    --sidebar-accent-foreground: 240 10% 3.9%;
+    --sidebar-border: 220 13% 88%;
+    --sidebar-ring: 246 74% 62%;
     
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -42,6 +42,18 @@ body {
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
+
+  @media (max-width: 767px) {
+    :root {
+      --sidebar-background: 238 28% 14% / 0.8;
+      --sidebar-foreground: 0 0% 100%;
+      --sidebar-accent: 238 28% 24% / 0.8;
+      --sidebar-accent-foreground: 0 0% 100%;
+      --sidebar-border: 238 28% 24%;
+      --sidebar-ring: 246 100% 77%;
+    }
+  }
+
   .dark {
     --background: 238 28% 10%;
     --foreground: 220 17% 95%;

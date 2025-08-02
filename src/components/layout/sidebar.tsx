@@ -126,7 +126,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2 flex flex-col gap-2">
         {isMobile && (
-            <Button variant="ghost" className="w-full" onClick={handleBackToHome}>
+            <Button variant="ghost" className="w-full justify-start gap-2" onClick={handleBackToHome}>
                 <ChevronLeft />
                 Back to Home
             </Button>
