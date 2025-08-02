@@ -89,7 +89,7 @@ export function LoginForm() {
 
             toast({
                 variant: "destructive",
-                title: "System Error",
+                title: "Login Error",
                 description: description,
             })
             setIsLoading(false)
