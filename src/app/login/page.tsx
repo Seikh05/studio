@@ -6,7 +6,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <div className="bg-primary rounded-lg p-2 text-primary-foreground">
+          <div className="bg-white rounded-lg p-2 text-primary-foreground">
              <Image
                 src="https://res.cloudinary.com/diqgquom2/image/upload/v1754114497/WhatsApp_Image_2024-11-13_at_23.44.12_1060fab9-removebg-preview_hzogwa.png"
                 alt="Club Logo"
