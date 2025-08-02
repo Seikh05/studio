@@ -27,6 +27,7 @@ const formSchema = z.object({
 })
 
 const USER_STORAGE_KEY = 'user-data';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 export function LoginForm() {
   const router = useRouter()
@@ -70,6 +71,11 @@ export function LoginForm() {
       // In this demo, the password is either the plain-text 'password' (for original users)
       // or it matches the password set in the user form (for new users).
       if (user && (user.password === values.password || values.password === 'password')) {
+        try {
+            window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(user));
+        } catch (error) {
+            console.error("Failed to save user session", error);
+        }
         router.push("/inventory")
       } else {
         toast({

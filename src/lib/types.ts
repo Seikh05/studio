@@ -17,6 +17,7 @@ export type User = {
   status: 'Active' | 'Inactive';
   lastLogin: string;
   avatarUrl: string;
+  password?: string;
 };
 
 export type LogEntry = {
