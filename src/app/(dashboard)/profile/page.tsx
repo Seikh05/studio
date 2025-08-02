@@ -18,6 +18,8 @@ import { useRouter } from 'next/navigation';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const USER_STORAGE_KEY = 'user-data';
+const PLACEHOLDER_AVATAR = 'https://placehold.co/40x40.png';
+
 
 const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -114,7 +116,7 @@ export default function ProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = { ...user, ...data, avatarUrl: data.avatarUrl || `https://placehold.co/40x40.png` };
+      const updatedUser = { ...user, ...data, avatarUrl: data.avatarUrl || PLACEHOLDER_AVATAR };
       
       // Update the logged-in user session
       window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
@@ -156,6 +158,8 @@ export default function ProfilePage() {
     );
   }
 
+  const showRemoveButton = avatarPreview && avatarPreview !== PLACEHOLDER_AVATAR;
+
   return (
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
@@ -193,7 +197,7 @@ export default function ProfilePage() {
                     )}
                     <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" disabled={isUploading}/>
                 </label>
-                {avatarPreview && (
+                {showRemoveButton && (
                   <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} disabled={isUploading}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Remove
