@@ -130,7 +130,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories, inven
     }
 
     const foundItem = inventory.find(
-      (invItem) => invItem.name.toLowerCase() === lowercasedName
+      (invItem) => invItem.name.toLowerCase().trim() === lowercasedName
     );
 
     setSuggestedItem(foundItem || null);
