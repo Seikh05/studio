@@ -18,21 +18,20 @@ import {
 import { Badge } from "@/components/ui/badge"
 import type { User } from "@/lib/types"
 
-const LastLoginCell = ({ dateString }: { dateString: string }) => {
+const LastLoginCell = ({ row }: { row: any }) => {
+  const lastLogin = row.getValue("lastLogin") as string;
   const [formattedDate, setFormattedDate] = useState<string | null>(null);
 
   useEffect(() => {
-    // This effect runs only on the client, avoiding hydration mismatches.
     try {
-      // Using a try-catch block for robustness against invalid date strings
-      setFormattedDate(format(new Date(dateString), "PPp"));
+      setFormattedDate(format(new Date(lastLogin), "PPp"));
     } catch (e) {
       setFormattedDate('Invalid date');
     }
-  }, [dateString]);
+  }, [lastLogin]);
 
-  // Render a placeholder on the server and initial client render
   if (!formattedDate) {
+    // Render a placeholder on the server and initial client render
     return <span>Loading...</span>;
   }
 
@@ -97,10 +96,7 @@ export const usersColumns: ColumnDef<User>[] = [
   {
     accessorKey: "lastLogin",
     header: "Last Login",
-    cell: ({ row }) => {
-      const lastLogin = row.getValue("lastLogin") as string
-      return <LastLoginCell dateString={lastLogin} />;
-    },
+    cell: LastLoginCell,
   },
   {
     id: "actions",
