@@ -131,7 +131,11 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
-      form.setValue('imageUrl', URL.createObjectURL(file), { shouldValidate: true });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue('imageUrl', reader.result as string, { shouldValidate: true });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
