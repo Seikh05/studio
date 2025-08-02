@@ -7,7 +7,7 @@ import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, LoaderCircle } from 'lucide-react';
+import { ArrowLeft, LoaderCircle, Calendar as CalendarIcon, X } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, User, Notification } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { TransactionForm } from '@/components/inventory/transaction-form';
@@ -25,7 +25,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
@@ -43,12 +45,14 @@ export default function ItemLogPage() {
   const highlightedTransactionId = searchParams.get('transactionId');
 
   const [item, setItem] = React.useState<InventoryItem | null>(null);
-  const [transactions, setTransactions] = React.useState<ItemTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = React.useState<ItemTransaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = React.useState<ItemTransaction[]>([]);
   const [isClient, setIsClient] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [transactionToReturn, setTransactionToReturn] = React.useState<ItemTransaction | null>(null);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = React.useState(false);
   const [returnQuantity, setReturnQuantity] = React.useState(1);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
 
 
   React.useEffect(() => {
@@ -68,7 +72,9 @@ export default function ItemLogPage() {
       const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${itemId}`;
       const transactionsData = window.localStorage.getItem(transactionsKey);
       if (transactionsData) {
-        setTransactions(JSON.parse(transactionsData));
+        const itemTransactions = JSON.parse(transactionsData);
+        setAllTransactions(itemTransactions);
+        setFilteredTransactions(itemTransactions);
       }
 
       // Fetch current user
@@ -87,10 +93,20 @@ export default function ItemLogPage() {
     }
   }, [itemId, toast]);
 
+  React.useEffect(() => {
+    if (selectedDate) {
+      const filtered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
+      setFilteredTransactions(filtered);
+    } else {
+      setFilteredTransactions(allTransactions);
+    }
+  }, [selectedDate, allTransactions]);
+
   const handleTransactionUpdate = (updatedTransactions: ItemTransaction[], updatedItem: InventoryItem) => {
      // Update state
     setItem(updatedItem);
-    setTransactions(updatedTransactions);
+    setAllTransactions(updatedTransactions);
+    setFilteredTransactions(updatedTransactions); // Also update filtered view
 
     try {
       // Update inventory in localStorage
@@ -176,7 +192,7 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
     
-    const updatedTransactions = [transaction, ...transactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
+    const updatedTransactions = [transaction, ...allTransactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(updatedTransactions, updatedItem);
 
@@ -232,7 +248,7 @@ export default function ItemLogPage() {
     };
 
     // Update the original borrow transaction
-    const updatedOldTransactions = transactions.map(t => {
+    const updatedOldTransactions = allTransactions.map(t => {
       if (t.id === transactionToReturn.id) {
         const newQuantityReturned = (t.quantityReturned || 0) + quantityToReturn;
         return { 
@@ -392,12 +408,45 @@ export default function ItemLogPage() {
 
             <Card>
                 <CardHeader>
-                  <CardTitle>Transaction History</CardTitle>
-                  <CardDescription>A complete log of all activities for this item.</CardDescription>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                        <div>
+                            <CardTitle>Transaction History</CardTitle>
+                            <CardDescription>
+                                {selectedDate ? `Showing transactions for ${format(selectedDate, 'PPP')}` : 'A complete log of all activities for this item.'}
+                            </CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <Button
+                                    variant={"outline"}
+                                    className="w-full sm:w-56 justify-start text-left font-normal"
+                                >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {selectedDate ? format(selectedDate, "PPP") : <span>Filter by date...</span>}
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            {selectedDate && (
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedDate(undefined)}>
+                                <X className="h-4 w-4" />
+                                <span className="sr-only">Reset</span>
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                   <TransactionHistory 
-                    transactions={transactions} 
+                    transactions={filteredTransactions} 
                     onReturn={handleOpenReturnDialog}
                     highlightedTransactionId={highlightedTransactionId}
                    />
