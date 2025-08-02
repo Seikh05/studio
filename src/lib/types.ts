@@ -28,6 +28,7 @@ export type LogEntry = {
   adminName: string;
   action: string;
   details: string;
+  isHidden?: boolean;
 };
 
 export type ItemTransaction = {

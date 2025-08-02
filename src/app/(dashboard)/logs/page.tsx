@@ -1,42 +1,59 @@
 'use client'
 
 import * as React from 'react';
-import type { LogEntry } from '@/lib/types';
+import type { LogEntry, User } from '@/lib/types';
 import { LogsDataTable } from '@/components/logs/logs-data-table';
 import { logsColumns } from '@/components/logs/logs-columns';
 import { isSameDay, parseISO } from 'date-fns';
+import { LoaderCircle } from 'lucide-react';
 
-const STORAGE_KEY = 'logs-data';
+const LOGS_STORAGE_KEY = 'logs-data';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
+
 
 export default function LogsPage() {
   const [allLogs, setAllLogs] = React.useState<LogEntry[]>([]);
   const [filteredLogs, setFilteredLogs] = React.useState<LogEntry[]>([]);
   const [isClient, setIsClient] = React.useState(false)
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
+  const loadLogs = React.useCallback(() => {
+    try {
+      const storedData = window.localStorage.getItem(LOGS_STORAGE_KEY);
+      if (storedData) {
+        const logs: LogEntry[] = JSON.parse(storedData)
+        logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        setAllLogs(logs);
+      } else {
+        setAllLogs([]);
+      }
+    } catch (error) {
+      console.error("Failed to access localStorage", error);
+      setAllLogs([]);
+    }
+  }, []);
+  
   React.useEffect(() => {
     setIsClient(true)
-  }, [])
+    try {
+        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+        if(storedUser) {
+            setCurrentUser(JSON.parse(storedUser));
+        }
+    } catch (error) {
+        console.error("Failed to get current user from localStorage", error);
+    }
+    loadLogs();
+    setIsLoading(false);
+  }, [loadLogs])
   
   React.useEffect(() => {
     if (isClient) {
       const handleStorageChange = () => {
-        try {
-          const storedData = window.localStorage.getItem(STORAGE_KEY);
-          if (storedData) {
-            const logs: LogEntry[] = JSON.parse(storedData)
-            logs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-            setAllLogs(logs);
-          } else {
-            setAllLogs([]);
-          }
-        } catch (error) {
-          console.error("Failed to access localStorage", error);
-          setAllLogs([]);
-        }
+        loadLogs();
       };
-
-      handleStorageChange();
 
       window.addEventListener('storage', handleStorageChange);
       window.addEventListener('logs-updated', handleStorageChange);
@@ -46,20 +63,34 @@ export default function LogsPage() {
         window.removeEventListener('logs-updated', handleStorageChange);
       };
     }
-  }, [isClient]);
+  }, [isClient, loadLogs]);
 
   React.useEffect(() => {
+    // Filter out hidden logs first
+    const visibleLogs = allLogs.filter(log => !log.isHidden);
+
     if (!selectedDate) {
-      setFilteredLogs(allLogs);
+      setFilteredLogs(visibleLogs);
     } else {
-      const filtered = allLogs.filter(log => isSameDay(parseISO(log.timestamp), selectedDate));
-      setFilteredLogs(filtered);
+      const dateFiltered = visibleLogs.filter(log => isSameDay(parseISO(log.timestamp), selectedDate));
+      setFilteredLogs(dateFiltered);
     }
   }, [selectedDate, allLogs]);
   
-  if (!isClient) {
-    return <LogsDataTable columns={logsColumns} data={[]} selectedDate={selectedDate} onDateChange={setSelectedDate} />;
+  if (!isClient || isLoading) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
-  return <LogsDataTable columns={logsColumns} data={filteredLogs} selectedDate={selectedDate} onDateChange={setSelectedDate} />;
+  return <LogsDataTable 
+            columns={logsColumns} 
+            data={filteredLogs} 
+            selectedDate={selectedDate} 
+            onDateChange={setSelectedDate}
+            currentUser={currentUser}
+            onLogsChange={loadLogs}
+        />;
 }
