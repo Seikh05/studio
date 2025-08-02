@@ -34,6 +34,7 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
 
   const getTransactionTitle = (transaction: ItemTransaction) => {
     const byAdmin = `by ${transaction.adminName}`;
+
     if (transaction.type === 'borrow') {
       let title = `Borrowed by ${transaction.borrowerName}`;
       if(transaction.borrowerRegdNum) {
@@ -49,10 +50,19 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
       return `${title} (approved ${byAdmin})`;
     }
     
+    // Handle return transactions
     let title = 'Returned to stock';
     if (transaction.itemName) {
       title = `${transaction.itemName} returned to stock`;
     }
+    
+    if (transaction.borrowerName) {
+      title += ` from ${transaction.borrowerName}`
+      if (transaction.borrowerRegdNum) {
+         title += ` (${transaction.borrowerRegdNum})`
+      }
+    }
+
     return `${title} (logged ${byAdmin})`;
   }
 

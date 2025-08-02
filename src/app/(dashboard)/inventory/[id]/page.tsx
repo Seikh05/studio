@@ -167,6 +167,8 @@ export default function ItemLogPage() {
         timestamp: new Date().toISOString(),
         type: 'return',
         quantity: transactionToReturn.quantity,
+        borrowerName: transactionToReturn.borrowerName, // Carry over borrower name
+        borrowerRegdNum: transactionToReturn.borrowerRegdNum, // Carry over regd num
         notes: `Return of transaction ${transactionToReturn.id}`,
         adminName: currentUser.name,
         reminder: false,
