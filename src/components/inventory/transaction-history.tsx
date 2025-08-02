@@ -40,11 +40,17 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
       if(transaction.borrowerRegdNum) {
         title += ` (${transaction.borrowerRegdNum})`
       }
+      if(transaction.borrowerPhone) {
+        title += ` - ${transaction.borrowerPhone}`
+      }
 
       if (transaction.itemName) {
         title = `${transaction.itemName} borrowed by ${transaction.borrowerName}`
         if(transaction.borrowerRegdNum) {
           title += ` (${transaction.borrowerRegdNum})`
+        }
+        if(transaction.borrowerPhone) {
+          title += ` - ${transaction.borrowerPhone}`
         }
       }
       return `${title} (approved ${byAdmin})`;

@@ -5,7 +5,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LoaderCircle, CalendarClock, AlertCircle } from 'lucide-react';
+import { LoaderCircle, CalendarClock, Phone } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, DueItem } from '@/lib/types';
 import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -65,6 +65,7 @@ export default function DueItemsPage() {
                                     itemName: item.name,
                                     itemImageUrl: item.imageUrl,
                                     borrowerName: t.borrowerName || 'Unknown',
+                                    borrowerPhone: t.borrowerPhone,
                                     returnDate: t.returnDate!,
                                     daysRemaining: daysRemaining,
                                     quantityBorrowed: t.quantity,
@@ -124,6 +125,12 @@ export default function DueItemsPage() {
                                 />
                                 <p className="font-semibold text-base">{item.itemName}</p>
                                 <p className="text-sm text-muted-foreground">Borrowed by {item.borrowerName}</p>
+                                {item.borrowerPhone && (
+                                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1">
+                                        <Phone className="h-3 w-3"/>
+                                        <span>{item.borrowerPhone}</span>
+                                    </div>
+                                )}
                                 <div className={cn(
                                     "font-bold text-lg mt-2",
                                     item.daysRemaining < 0 && "text-destructive",

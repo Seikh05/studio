@@ -38,6 +38,7 @@ export type ItemTransaction = {
   quantity: number;
   borrowerName?: string;
   borrowerRegdNum?: string;
+  borrowerPhone?: string;
   returnDate?: string;
   notes?: string;
   reminder: boolean;
@@ -69,6 +70,7 @@ export type DueItem = {
   itemName: string;
   itemImageUrl: string;
   borrowerName: string;
+  borrowerPhone?: string;
   returnDate: string;
   daysRemaining: number;
   quantityBorrowed: number;

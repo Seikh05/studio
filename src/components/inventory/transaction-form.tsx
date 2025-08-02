@@ -25,6 +25,7 @@ const formSchema = z.object({
   quantity: z.coerce.number().min(1, 'Quantity must be at least 1.'),
   borrowerName: z.string().optional(),
   borrowerRegdNum: z.string().optional(),
+  borrowerPhone: z.string().optional(),
   returnDate: z.date().optional(),
   notes: z.string().optional(),
   reminder: z.boolean().default(false),
@@ -55,6 +56,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             quantity: 1,
             borrowerName: '',
             borrowerRegdNum: '',
+            borrowerPhone: '',
             notes: '',
             reminder: false,
         },
@@ -74,6 +76,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 quantity: 1,
                 borrowerName: '',
                 borrowerRegdNum: '',
+                borrowerPhone: '',
                 notes: '',
                 returnDate: undefined
             });
@@ -168,34 +171,49 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 </div>
 
                 {transactionType === 'borrow' && (
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <FormField
+                                control={form.control}
+                                name="borrowerName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Borrower&apos;s Name</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. John Doe" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="borrowerRegdNum"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Registration Number</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="e.g. 21051234" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <FormField
                             control={form.control}
-                            name="borrowerName"
+                            name="borrowerPhone"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Borrower&apos;s Name</FormLabel>
+                                    <FormLabel>Phone Number (Optional)</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="e.g. John Doe" {...field} />
+                                        <Input placeholder="e.g. 9876543210" {...field} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                         <FormField
-                            control={form.control}
-                            name="borrowerRegdNum"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Registration Number</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="e.g. 21051234" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </div>
+                    </>
                 )}
                  <FormField
                     control={form.control}
