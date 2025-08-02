@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import * as React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Package, Users, ScrollText, LogOut, LayoutDashboard } from 'lucide-react';
+import { Package, Users, ScrollText, LogOut, LayoutDashboard, ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import {
   Sidebar,
@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '../ui/button';
 import type { User as UserType } from '@/lib/types';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 
@@ -78,24 +79,38 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader>
-        <div className="flex items-center gap-3">
-          <div className="bg-primary rounded-lg p-1 text-primary-foreground">
-            <Image
-              src="https://res.cloudinary.com/diqgquom2/image/upload/v1754114497/WhatsApp_Image_2024-11-13_at_23.44.12_1060fab9-removebg-preview_hzogwa.png"
-              alt="Club Icon"
-              width={32}
-              height={32}
-              className="h-8 w-8"
-            />
-          </div>
-          <span
-            className={cn(
-              'font-semibold text-xl transition-opacity duration-200',
-              state === 'collapsed' && 'opacity-0'
-            )}
-          >
-            Robostreaks
-          </span>
+        <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+                 <div className="bg-primary rounded-lg p-1 text-primary-foreground">
+                    <Image
+                    src="https://res.cloudinary.com/diqgquom2/image/upload/v1754114497/WhatsApp_Image_2024-11-13_at_23.44.12_1060fab9-removebg-preview_hzogwa.png"
+                    alt="Club Icon"
+                    width={32}
+                    height={32}
+                    className="h-8 w-8"
+                    />
+                </div>
+                <span
+                    className={cn(
+                    'font-semibold text-xl transition-opacity duration-200',
+                    state === 'collapsed' && 'opacity-0'
+                    )}
+                >
+                    Robostreaks
+                </span>
+            </div>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className={cn("h-8 w-8", state === 'collapsed' && 'hidden')} asChild>
+                        <Link href="/dashboard">
+                            <ChevronLeft />
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                    <p>Back to Home</p>
+                </TooltipContent>
+            </Tooltip>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
