@@ -14,6 +14,7 @@ const pathToTitle: { [key: string]: string } = {
   '/inventory': 'Inventory Management',
   '/users': 'User Management',
   '/logs': 'Inventory Log',
+  '/profile': 'My Profile'
 };
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
@@ -25,13 +26,25 @@ export function AppHeader() {
   const [user, setUser] = React.useState<UserType | null>(null);
 
   React.useEffect(() => {
-    try {
-      const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
-      }
-    } catch (error) {
-      console.error("Failed to retrieve user from storage", error);
+    const handleStorageChange = () => {
+        try {
+          const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          } else {
+            setUser(null);
+          }
+        } catch (error) {
+          console.error("Failed to retrieve user from storage", error);
+        }
+    };
+    
+    handleStorageChange(); // Initial load
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
     }
   }, []);
 
@@ -80,9 +93,11 @@ export function AppHeader() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem asChild>
+                <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                </Link>
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Settings className="mr-2 h-4 w-4" />
