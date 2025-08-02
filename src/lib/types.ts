@@ -38,7 +38,7 @@ export type ItemTransaction = {
   notes?: string;
   reminder: boolean;
   adminName: string;
-  adminAvatar: string;
+  adminAvatar?: string;
   returned?: boolean;
   itemName?: string;
 }

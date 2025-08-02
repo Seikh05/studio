@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Avatar, AvatarFallback } from '../ui/avatar'
 
 
 interface TransactionHistoryProps {
@@ -46,6 +47,10 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
     }
     return `${title} (logged ${byAdmin})`;
   }
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map((n) => n[0]).join('').toUpperCase();
+  };
 
   return (
     <TooltipProvider>
@@ -128,14 +133,22 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                       )}
                       <Tooltip>
                         <TooltipTrigger asChild>
-                           <Image
-                              src={transaction.adminAvatar}
-                              alt={transaction.adminName}
-                              width={24}
-                              height={24}
-                              className="rounded-full"
-                              data-ai-hint="person avatar"
-                          />
+                          <Avatar className='h-6 w-6'>
+                            {transaction.adminAvatar ? (
+                               <Image
+                                  src={transaction.adminAvatar}
+                                  alt={transaction.adminName}
+                                  width={24}
+                                  height={24}
+                                  className="rounded-full"
+                                  data-ai-hint="person avatar"
+                              />
+                            ) : (
+                              <AvatarFallback className='text-[10px]'>
+                                {getInitials(transaction.adminName)}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
                         </TooltipTrigger>
                         <TooltipContent>
                            <p>Logged by {transaction.adminName}</p>

@@ -101,7 +101,6 @@ export default function ItemLogPage() {
       id: `TXN-${Date.now()}`,
       timestamp: new Date().toISOString(),
       adminName: currentUser.name,
-      adminAvatar: currentUser.avatarUrl,
       returned: false,
     };
 
@@ -146,7 +145,6 @@ export default function ItemLogPage() {
         quantity: borrowTransaction.quantity,
         notes: `Return of transaction ${borrowTransaction.id}`,
         adminName: currentUser.name,
-        adminAvatar: currentUser.avatarUrl,
         reminder: false,
         returned: false, // Not applicable for return transactions
     };
@@ -160,12 +158,13 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
 
-    // Mark the original borrow transaction as returned and add the new return transaction
+    // Mark the original borrow transaction as returned
     const updatedTransactionList = transactions.map(t => t.id === borrowTransaction.id ? { ...t, returned: true } : t);
     
-    const updatedTransactions = [returnTransaction, ...updatedTransactionList].slice(0, MAX_TRANSACTIONS_PER_ITEM);
+    // Add the new return transaction and slice to maintain the limit
+    const finalTransactions = [returnTransaction, ...updatedTransactionList].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
-    handleTransactionUpdate(updatedTransactions, updatedItem);
+    handleTransactionUpdate(finalTransactions, updatedItem);
 
     toast({
       title: 'Item Returned',
