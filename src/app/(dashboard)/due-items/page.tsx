@@ -5,8 +5,6 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { LoaderCircle, CalendarClock, AlertCircle } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, DueItem } from '@/lib/types';
@@ -15,25 +13,15 @@ import { cn } from '@/lib/utils';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
-const DUE_DAYS_THRESHOLD_KEY = 'due-days-threshold';
 
 
 export default function DueItemsPage() {
     const [dueItems, setDueItems] = React.useState<DueItem[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isClient, setIsClient] = React.useState(false);
-    const [daysThreshold, setDaysThreshold] = React.useState<number>(4);
 
     React.useEffect(() => {
         setIsClient(true);
-        try {
-            const storedThreshold = window.localStorage.getItem(DUE_DAYS_THRESHOLD_KEY);
-            if (storedThreshold) {
-                setDaysThreshold(Number(storedThreshold));
-            }
-        } catch(error) {
-            console.error("Failed to load threshold from localStorage", error)
-        }
     }, [])
 
     React.useEffect(() => {
@@ -62,7 +50,6 @@ export default function DueItemsPage() {
                         const activeBorrows = itemTransactions.filter(t => 
                             t.type === 'borrow' && 
                             !t.returned && 
-                            t.reminder &&
                             t.returnDate
                         );
 
@@ -70,17 +57,15 @@ export default function DueItemsPage() {
                             const returnDate = parseISO(t.returnDate!);
                             const daysRemaining = differenceInDays(returnDate, today);
 
-                            if (daysRemaining <= daysThreshold) {
-                                allDueItems.push({
-                                    transactionId: t.id,
-                                    itemId: item.id,
-                                    itemName: item.name,
-                                    itemImageUrl: item.imageUrl,
-                                    borrowerName: t.borrowerName || 'Unknown',
-                                    returnDate: t.returnDate!,
-                                    daysRemaining: daysRemaining
-                                });
-                            }
+                            allDueItems.push({
+                                transactionId: t.id,
+                                itemId: item.id,
+                                itemName: item.name,
+                                itemImageUrl: item.imageUrl,
+                                borrowerName: t.borrowerName || 'Unknown',
+                                returnDate: t.returnDate!,
+                                daysRemaining: daysRemaining
+                            });
                         });
                     }
                 });
@@ -98,21 +83,7 @@ export default function DueItemsPage() {
         
         fetchDueItems();
 
-    }, [isClient, daysThreshold]);
-
-    const handleThresholdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setDaysThreshold(Number(value));
-    }
-    
-    const handleSaveThreshold = () => {
-        try {
-            window.localStorage.setItem(DUE_DAYS_THRESHOLD_KEY, String(daysThreshold));
-             alert("Threshold saved!");
-        } catch(error) {
-            console.error("Failed to save threshold to localStorage", error)
-        }
-    }
+    }, [isClient]);
 
 
   if (!isClient || isLoading) {
@@ -127,25 +98,8 @@ export default function DueItemsPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <CardTitle>Due & Overdue Items</CardTitle>
-                    <CardDescription>Items with active reminders that are due for return soon or are overdue.</CardDescription>
-                </div>
-                <div className="flex items-end gap-2">
-                    <div className="grid w-full max-w-xs items-center gap-1.5">
-                        <Label htmlFor="days-threshold">Due within (days)</Label>
-                        <Input 
-                            id="days-threshold" 
-                            type="number" 
-                            value={daysThreshold} 
-                            onChange={handleThresholdChange}
-                            className="w-24"
-                        />
-                    </div>
-                     <Button onClick={handleSaveThreshold}>Save</Button>
-                </div>
-            </div>
+            <CardTitle>Borrowed Items</CardTitle>
+            <CardDescription>All items currently borrowed, sorted by the nearest due date.</CardDescription>
         </CardHeader>
         <CardContent>
             {dueItems.length > 0 ? (
@@ -186,8 +140,8 @@ export default function DueItemsPage() {
             ) : (
                 <div className="text-center text-muted-foreground py-16">
                     <CalendarClock className="mx-auto h-12 w-12 mb-4" />
-                    <h3 className="text-xl font-semibold">All Clear!</h3>
-                    <p>There are no items with reminders due within the next {daysThreshold} day(s).</p>
+                    <h3 className="text-xl font-semibold">No Borrowed Items</h3>
+                    <p>There are no items currently marked as borrowed.</p>
                 </div>
             )}
         </CardContent>
