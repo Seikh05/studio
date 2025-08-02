@@ -43,8 +43,8 @@ async function getUsersData(): Promise<User[]> {
     },
     {
       id: 'USR-005',
-      name: 'Super User',
-      email: 'super.user@example.com',
+      name: 'Seikh Mustakim',
+      email: 'seikhsouvagyamustakim@gmail.com',
       role: 'Super Admin',
       status: 'Active',
       lastLogin: new Date().toISOString(),
