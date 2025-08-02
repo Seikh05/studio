@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { CategoryManager } from "./category-manager"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
@@ -118,6 +119,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   data: initialData,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
+  const isMobile = useIsMobile();
   
   const [data, setData] = React.useState<TData[]>(initialData);
   const [isClient, setIsClient] = React.useState(false)
@@ -198,6 +200,17 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   const [selectedItem, setSelectedItem] = React.useState<TData | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
+
+  React.useEffect(() => {
+    if (isMobile) {
+      setColumnVisibility({
+        category: false,
+        status: false,
+      })
+    } else {
+      setColumnVisibility({})
+    }
+  }, [isMobile])
 
   const table = useReactTable({
     data,
@@ -334,7 +347,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Filter by name..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -343,49 +356,56 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
           }
           className="w-full md:max-w-sm"
         />
-        <div className="flex w-full md:w-auto items-center justify-end gap-2">
-           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsCategoryManagerOpen(true)}>
-             <ListTree className="h-4 w-4" />
-             <span className="sr-only">Edit Categories</span>
-          </Button>
-           <Button variant="outline" className="hidden md:flex" onClick={() => setIsCategoryManagerOpen(true)}>
-             <ListTree className="mr-2 h-4 w-4" />
-             Edit Categories
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="ml-auto">
-                <SlidersHorizontal className="mr-2 h-4 w-4" />
-                View
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
-                  )
-                })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-           <Button onClick={handleOpenNew} size="icon" className="md:hidden">
-            <PlusCircle className="h-4 w-4" />
-            <span className="sr-only">Add Item</span>
-          </Button>
-          <Button onClick={handleOpenNew} className="hidden md:flex">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Item
-          </Button>
+        <div className="flex w-full items-center justify-between md:justify-end md:gap-2">
+            <div className="md:hidden">
+                <Button onClick={handleOpenNew} size="icon">
+                    <PlusCircle className="h-4 w-4" />
+                    <span className="sr-only">Add Item</span>
+                </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+                <Button variant="outline" className="hidden md:flex" onClick={() => setIsCategoryManagerOpen(true)}>
+                    <ListTree className="mr-2 h-4 w-4" />
+                    Edit Categories
+                </Button>
+                <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsCategoryManagerOpen(true)}>
+                    <ListTree className="h-4 w-4" />
+                    <span className="sr-only">Edit Categories</span>
+                </Button>
+                
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="ml-auto">
+                        <SlidersHorizontal className="mr-2 h-4 w-4" />
+                        <span className="hidden md:inline">View</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    {table
+                        .getAllColumns()
+                        .filter((column) => column.getCanHide())
+                        .map((column) => {
+                        return (
+                            <DropdownMenuCheckboxItem
+                            key={column.id}
+                            className="capitalize"
+                            checked={column.getIsVisible()}
+                            onCheckedChange={(value) =>
+                                column.toggleVisibility(!!value)
+                            }
+                            >
+                            {column.id}
+                            </DropdownMenuCheckboxItem>
+                        )
+                        })}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            
+                <Button onClick={handleOpenNew} className="hidden md:flex">
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Item
+                </Button>
+            </div>
         </div>
       </div>
       <Card className="shadow-sm">
