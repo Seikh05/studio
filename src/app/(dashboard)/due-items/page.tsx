@@ -5,20 +5,24 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LoaderCircle, CalendarClock, Phone } from 'lucide-react';
+import { LoaderCircle, CalendarClock, Phone, Search } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, DueItem } from '@/lib/types';
 import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
 
 
 export default function DueItemsPage() {
-    const [dueItems, setDueItems] = React.useState<DueItem[]>([]);
+    const [allDueItems, setAllDueItems] = React.useState<DueItem[]>([]);
+    const [filteredDueItems, setFilteredDueItems] = React.useState<DueItem[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isClient, setIsClient] = React.useState(false);
+    const [searchTerm, setSearchTerm] = React.useState('');
+
 
     React.useEffect(() => {
         setIsClient(true);
@@ -32,13 +36,13 @@ export default function DueItemsPage() {
             try {
                 const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
                 if (!inventoryData) {
-                    setDueItems([]);
+                    setAllDueItems([]);
                     setIsLoading(false);
                     return;
                 }
 
                 const inventory: InventoryItem[] = JSON.parse(inventoryData);
-                const allDueItems: DueItem[] = [];
+                const items: DueItem[] = [];
                 const today = startOfToday();
 
                 inventory.forEach(item => {
@@ -59,7 +63,7 @@ export default function DueItemsPage() {
                             const quantityDue = t.quantity - (t.quantityReturned || 0);
 
                             if(quantityDue > 0) {
-                                allDueItems.push({
+                                items.push({
                                     transactionId: t.id,
                                     itemId: item.id,
                                     itemName: item.name,
@@ -77,12 +81,13 @@ export default function DueItemsPage() {
                     }
                 });
 
-                allDueItems.sort((a, b) => a.daysRemaining - b.daysRemaining);
-                setDueItems(allDueItems);
+                items.sort((a, b) => a.daysRemaining - b.daysRemaining);
+                setAllDueItems(items);
+                setFilteredDueItems(items);
 
             } catch (error) {
                 console.error("Failed to load due items data", error)
-                setDueItems([]);
+                setAllDueItems([]);
             } finally {
                 setIsLoading(false);
             }
@@ -91,6 +96,18 @@ export default function DueItemsPage() {
         fetchDueItems();
 
     }, [isClient]);
+
+    React.useEffect(() => {
+        const lowercasedFilter = searchTerm.toLowerCase();
+        const filteredData = allDueItems.filter(item => {
+            return (
+                item.borrowerName.toLowerCase().includes(lowercasedFilter) ||
+                (item.borrowerPhone && item.borrowerPhone.includes(lowercasedFilter)) ||
+                item.itemName.toLowerCase().includes(lowercasedFilter)
+            );
+        });
+        setFilteredDueItems(filteredData);
+    }, [searchTerm, allDueItems]);
 
 
   if (!isClient || isLoading) {
@@ -105,13 +122,26 @@ export default function DueItemsPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-            <CardTitle>Borrowed Items</CardTitle>
-            <CardDescription>All items currently borrowed, sorted by the nearest due date.</CardDescription>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <CardTitle>Borrowed Items</CardTitle>
+                    <CardDescription>All items currently borrowed, sorted by the nearest due date.</CardDescription>
+                </div>
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Filter by name, phone, or item..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full sm:w-64 pl-10"
+                    />
+                </div>
+            </div>
         </CardHeader>
         <CardContent>
-            {dueItems.length > 0 ? (
+            {filteredDueItems.length > 0 ? (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {dueItems.map(item => (
+                    {filteredDueItems.map(item => (
                         <Link href={`/inventory/${item.itemId}`} key={item.transactionId}>
                         <Card className="h-full hover:border-primary transition-colors flex flex-col">
                             <CardContent className="p-4 flex flex-col items-center text-center flex-1">
@@ -158,8 +188,8 @@ export default function DueItemsPage() {
             ) : (
                 <div className="text-center text-muted-foreground py-16">
                     <CalendarClock className="mx-auto h-12 w-12 mb-4" />
-                    <h3 className="text-xl font-semibold">No Borrowed Items</h3>
-                    <p>There are no items currently marked as borrowed.</p>
+                    <h3 className="text-xl font-semibold">{searchTerm ? 'No Matching Items' : 'No Borrowed Items'}</h3>
+                    <p>{searchTerm ? 'Try adjusting your search term.' : 'There are no items currently marked as borrowed.'}</p>
                 </div>
             )}
         </CardContent>
