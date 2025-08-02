@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from "react"
@@ -42,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Label } from "../ui/label"
+import { Switch } from "../ui/switch"
 
 
 const LOGS_STORAGE_KEY = 'logs-data';
@@ -61,6 +63,8 @@ interface DataTableProps<TData, TValue> {
   onDateChange: (date: Date | undefined) => void;
   currentUser: User | null;
   onLogsChange: () => void;
+  showHidden: boolean;
+  onShowHiddenChange: (show: boolean) => void;
 }
 
 export function LogsDataTable<TData extends LogEntry, TValue>({
@@ -70,6 +74,8 @@ export function LogsDataTable<TData extends LogEntry, TValue>({
   onDateChange,
   currentUser,
   onLogsChange,
+  showHidden,
+  onShowHiddenChange,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -232,15 +238,25 @@ export function LogsDataTable<TData extends LogEntry, TValue>({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <Input
               placeholder="Filter by action details..."
               value={(table.getColumn("details")?.getFilterValue() as string) ?? ""}
               onChange={(event) =>
                 table.getColumn("details")?.setFilterValue(event.target.value)
               }
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
+            {currentUser?.role === 'Super Admin' && (
+              <div className="flex items-center space-x-2">
+                <Switch 
+                  id="show-hidden"
+                  checked={showHidden}
+                  onCheckedChange={onShowHiddenChange}
+                />
+                <Label htmlFor="show-hidden">Show Hidden Logs</Label>
+              </div>
+            )}
           </div>
           <div className="rounded-md border">
             <Table>
@@ -268,6 +284,7 @@ export function LogsDataTable<TData extends LogEntry, TValue>({
                     <TableRow
                       key={row.id}
                       data-state={row.getIsSelected() && "selected"}
+                      className={row.original.isHidden ? 'bg-muted/50' : ''}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>

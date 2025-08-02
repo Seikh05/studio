@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from 'react';
@@ -18,6 +19,8 @@ export default function LogsPage() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [showHidden, setShowHidden] = React.useState(false);
+
 
   const loadLogs = React.useCallback(() => {
     try {
@@ -66,16 +69,17 @@ export default function LogsPage() {
   }, [isClient, loadLogs]);
 
   React.useEffect(() => {
-    // Filter out hidden logs first
-    const visibleLogs = allLogs.filter(log => !log.isHidden);
-
+    // Filter by visibility first
+    const visibleLogs = showHidden ? allLogs : allLogs.filter(log => !log.isHidden);
+    
+    // Then filter by date
     if (!selectedDate) {
       setFilteredLogs(visibleLogs);
     } else {
       const dateFiltered = visibleLogs.filter(log => isSameDay(parseISO(log.timestamp), selectedDate));
       setFilteredLogs(dateFiltered);
     }
-  }, [selectedDate, allLogs]);
+  }, [selectedDate, allLogs, showHidden]);
   
   if (!isClient || isLoading) {
     return (
@@ -92,5 +96,7 @@ export default function LogsPage() {
             onDateChange={setSelectedDate}
             currentUser={currentUser}
             onLogsChange={loadLogs}
+            showHidden={showHidden}
+            onShowHiddenChange={setShowHidden}
         />;
 }

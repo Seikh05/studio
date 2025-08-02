@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "../ui/button"
 import { MoreHorizontal, Trash2, EyeOff, Eye } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip"
 
 const ActionsCell = ({ row, table }: { row: any, table: any }) => {
   const log = row.original as LogEntry;
@@ -57,13 +59,30 @@ export const logsColumns: ColumnDef<LogEntry>[] = [
     accessorKey: "action",
     header: "Action",
     cell: ({ row }) => {
-      const action = row.getValue("action") as string
+      const log = row.original as LogEntry;
+      const action = log.action;
       let variant: "default" | "secondary" | "outline" | "destructive" = "outline"
       if (action.includes("Add") || action.includes("Increase")) variant = "default"
       if (action.includes("Delete") || action.includes("Decrease")) variant = "destructive"
       if (action.includes("Update") || action.includes("Change")) variant = "secondary"
 
-      return <Badge variant={variant} className="capitalize">{action}</Badge>
+      return (
+        <div className="flex items-center gap-2">
+           <Badge variant={variant} className="capitalize">{action}</Badge>
+           {log.isHidden && (
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <EyeOff className="h-4 w-4 text-muted-foreground"/>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>This log is hidden</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+           )}
+        </div>
+      )
     }
   },
   {
