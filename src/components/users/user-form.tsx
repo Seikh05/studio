@@ -104,7 +104,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) 
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg grid-rows-[auto,1fr,auto]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{user ? "Edit User" : "Add New User"}</DialogTitle>
           <DialogDescription>
@@ -112,9 +112,9 @@ export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) 
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
-            <ScrollArea>
-              <div className="space-y-4 pr-6">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <ScrollArea className="h-[60vh] pr-6">
+              <div className="space-y-4 py-4">
                 <FormField
                   control={form.control}
                   name="name"

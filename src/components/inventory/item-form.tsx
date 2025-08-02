@@ -182,7 +182,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
         onCapture={handleImageCapture}
       />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl grid-rows-[auto,1fr,auto]">
+        <DialogContent className="sm:max-w-3xl">
            <DialogHeader>
             <DialogTitle>{item ? "Edit Item" : "Add New Item"}</DialogTitle>
             <DialogDescription>
@@ -190,9 +190,9 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
-              <ScrollArea className="h-full">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4 pr-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <ScrollArea className="h-[60vh] pr-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
                   <div className="md:col-span-1 space-y-4">
                     <div>
                       <FormLabel>Item Image</FormLabel>
