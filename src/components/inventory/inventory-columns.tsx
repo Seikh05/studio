@@ -23,41 +23,12 @@ const ActionsCell = ({ row, table }: { row: any, table: any }) => {
   const router = useRouter();
   const { currentUser } = table.options.meta || {};
 
-  if (!currentUser || currentUser.role === 'General Member') {
-    return null;
-  }
-
   return (
     <div className="text-right">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0">
-            <span className="sr-only">Open menu</span>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => router.push(`/inventory/${item.id}`)}>
+        <Button variant="outline" size="sm" onClick={() => router.push(`/inventory/${item.id}`)}>
             <Eye className="mr-2 h-4 w-4" />
-            View Logs
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigator.clipboard.writeText(item.id)}>
-            Copy item ID
-          </DropdownMenuItem>
-          <DropdownMenuItem>Generate QR Code</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(item)}>
-            Edit item
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            onClick={() => table.options.meta?.openDeleteDialog?.(item)}
-          >
-            Delete item
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            View Log
+        </Button>
     </div>
   );
 };
@@ -99,21 +70,6 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
     },
   },
   {
-    accessorKey: "status",
-    header: "Status",
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string
-      const variant: "default" | "secondary" | "destructive" =
-        status === "In Stock"
-          ? "default"
-          : status === "Low Stock"
-          ? "secondary"
-          : "destructive"
-      
-      return <Badge variant={variant} className="capitalize">{status}</Badge>
-    },
-  },
-  {
     accessorKey: "category",
     header: "Category",
   },
@@ -127,6 +83,7 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   },
   {
     id: "actions",
+    header: () => <div className="text-right">Actions</div>,
     cell: ActionsCell,
   },
 ]
