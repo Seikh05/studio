@@ -119,7 +119,15 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-2 flex flex-col gap-2">
+        {isMobile && (
+            <Button variant="outline" className="w-full" asChild>
+                <Link href="/dashboard">
+                    <ChevronLeft />
+                    Back to Home
+                </Link>
+            </Button>
+        )}
         <div className={cn('flex items-center gap-3 w-full', state === 'collapsed' && 'justify-center')}>
           <Avatar className="h-9 w-9">
             <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
@@ -133,14 +141,6 @@ export function AppSidebar() {
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
-        {isMobile && (
-            <Button variant="outline" className="w-full mt-2" asChild>
-                <Link href="/dashboard">
-                    <ChevronLeft />
-                    Back to Home
-                </Link>
-            </Button>
-        )}
       </SidebarFooter>
     </Sidebar>
   );
