@@ -37,6 +37,7 @@ import { validateDescriptionConsistency } from "@/ai/flows/validate-description-
 import type { InventoryItem, ValidateDescriptionConsistencyOutput, Category } from "@/lib/types"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { CameraCapture } from "./camera-capture"
+import { ScrollArea } from "../ui/scroll-area"
 
 const formSchema = z.object({
   name: z.string().min(3, "Item name must be at least 3 characters."),
@@ -181,166 +182,170 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories }: Ite
         onCapture={handleImageCapture}
       />
       <Dialog open={isOpen} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-3xl">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-3xl grid-rows-[auto,1fr,auto]">
+           <DialogHeader>
             <DialogTitle>{item ? "Edit Item" : "Add New Item"}</DialogTitle>
             <DialogDescription>
               {item ? "Update the details of the item." : "Fill in the details for the new item."}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
-              <div className="md:col-span-1 space-y-4">
-                <div>
-                  <FormLabel>Item Image</FormLabel>
-                  <div className="mt-2 flex justify-center rounded-lg border border-dashed border-input p-6 relative bg-muted/20">
-                    {imagePreview ? (
-                      <>
-                          <img src={imagePreview} alt="Preview" className="h-40 w-40 object-cover rounded-md" data-ai-hint="product image" />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6 rounded-full"
-                            onClick={() => form.setValue('imageUrl', '')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                      </>
-                    ) : (
-                      <div className="text-center w-full py-4">
-                        <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
-                        <div className="mt-4 flex flex-col items-center text-sm justify-center gap-2 text-muted-foreground">
-                            <label
-                              htmlFor="file-upload"
-                              className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
-                            >
-                              <span>Upload a file</span>
-                              <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
-                            </label>
-                            <span className="text-xs">or</span>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setIsCameraOpen(true)}>
-                               <Camera className="mr-2 h-4 w-4"/>
-                               Take Photo
-                            </Button>
-                        </div>
-                        <p className="text-xs leading-5 text-muted-foreground/80 mt-2">PNG, JPG up to 10MB</p>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col">
+              <ScrollArea className="h-full">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4 pr-6">
+                  <div className="md:col-span-1 space-y-4">
+                    <div>
+                      <FormLabel>Item Image</FormLabel>
+                      <div className="mt-2 flex justify-center rounded-lg border border-dashed border-input p-6 relative bg-muted/20">
+                        {imagePreview ? (
+                          <>
+                              <img src={imagePreview} alt="Preview" className="h-40 w-40 object-cover rounded-md" data-ai-hint="product image" />
+                              <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute top-2 right-2 h-6 w-6 rounded-full"
+                                onClick={() => form.setValue('imageUrl', '')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                          </>
+                        ) : (
+                          <div className="text-center w-full py-4">
+                            <UploadCloud className="mx-auto h-12 w-12 text-muted-foreground" />
+                            <div className="mt-4 flex flex-col items-center text-sm justify-center gap-2 text-muted-foreground">
+                                <label
+                                  htmlFor="file-upload"
+                                  className="relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80"
+                                >
+                                  <span>Upload a file</span>
+                                  <input id="file-upload" name="file-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" />
+                                </label>
+                                <span className="text-xs">or</span>
+                                <Button type="button" variant="outline" size="sm" onClick={() => setIsCameraOpen(true)}>
+                                  <Camera className="mr-2 h-4 w-4"/>
+                                  Take Photo
+                                </Button>
+                            </div>
+                            <p className="text-xs leading-5 text-muted-foreground/80 mt-2">PNG, JPG up to 10MB</p>
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="md:col-span-2 space-y-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Item Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Quantum Flux-o-Matic" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="category"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Category</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select one" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <div className="md:col-span-2 space-y-4">
                     <FormField
                       control={form.control}
-                      name="stock"
+                      name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Stock</FormLabel>
+                          <FormLabel>Item Name</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="0" {...field} />
+                            <Input placeholder="e.g. Quantum Flux-o-Matic" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                </div>
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Describe the item, its features, and condition."
-                          className="resize-none"
-                          rows={3}
-                          {...field}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Category</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select one" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.map((cat) => (
+                                  <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                        <FormField
+                          control={form.control}
+                          name="stock"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Stock</FormLabel>
+                              <FormControl>
+                                <Input type="number" placeholder="0" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Description (Optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Describe the item, its features, and condition."
+                              className="resize-none"
+                              rows={3}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                {isStockChanged && (
-                  <FormField
-                    control={form.control}
-                    name="stockUpdateNote"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stock Update Note</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="e.g. Initial stock count, new shipment received, etc."
-                            className="resize-none"
-                            rows={2}
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                    {isStockChanged && (
+                      <FormField
+                        control={form.control}
+                        name="stockUpdateNote"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Stock Update Note</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="e.g. Initial stock count, new shipment received, etc."
+                                className="resize-none"
+                                rows={2}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
                     )}
-                  />
-                )}
 
-                <div className="space-y-2">
-                  <Button type="button" variant="outline" onClick={handleValidateDescription} disabled={isAiValidating}>
-                    {isAiValidating ? (
-                      <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="mr-2 h-4 w-4" />
-                    )}
-                    Validate with AI
-                  </Button>
-                  {aiValidationResult && (
-                    <Alert variant={aiValidationResult.isConsistent ? "default" : "destructive"} className={aiValidationResult.isConsistent ? 'border-green-300 bg-green-50 dark:bg-green-950 dark:border-green-800' : ''}>
-                      {aiValidationResult.isConsistent ? <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" /> : <AlertTriangle className="h-4 w-4" />}
-                      <AlertTitle className={aiValidationResult.isConsistent ? 'text-green-800 dark:text-green-300' : ''}>{aiValidationResult.isConsistent ? "Consistent" : "Inconsistent"}</AlertTitle>
-                      <AlertDescription className={aiValidationResult.isConsistent ? 'text-green-700 dark:text-green-300' : ''}>{aiValidationResult.reason}</AlertDescription>
-                    </Alert>
-                  )}
+                    <div className="space-y-2">
+                      <Button type="button" variant="outline" onClick={handleValidateDescription} disabled={isAiValidating}>
+                        {isAiValidating ? (
+                          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Sparkles className="mr-2 h-4 w-4" />
+                        )}
+                        Validate with AI
+                      </Button>
+                      {aiValidationResult && (
+                        <Alert variant={aiValidationResult.isConsistent ? "default" : "destructive"} className={aiValidationResult.isConsistent ? 'border-green-300 bg-green-50 dark:bg-green-950 dark:border-green-800' : ''}>
+                          {aiValidationResult.isConsistent ? <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" /> : <AlertTriangle className="h-4 w-4" />}
+                          <AlertTitle className={aiValidationResult.isConsistent ? 'text-green-800 dark:text-green-300' : ''}>{aiValidationResult.isConsistent ? "Consistent" : "Inconsistent"}</AlertTitle>
+                          <AlertDescription className={aiValidationResult.isConsistent ? 'text-green-700 dark:text-green-300' : ''}>{aiValidationResult.reason}</AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <DialogFooter className="md:col-span-3">
+              </ScrollArea>
+              <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
