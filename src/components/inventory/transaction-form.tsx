@@ -288,7 +288,6 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                         <Input 
                                             placeholder="e.g. 9876543210" 
                                             {...field}
-                                            disabled={borrowerId !== 'other'}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -340,3 +339,5 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
         </Form>
     );
 }
+
+    
