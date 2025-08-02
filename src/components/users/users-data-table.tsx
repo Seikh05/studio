@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from "react"
@@ -55,6 +56,7 @@ interface DataTableProps<TData, TValue> {
 }
 
 const STORAGE_KEY = 'user-data';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 export function UserDataTable<TData extends User, TValue>({
   columns,
@@ -63,6 +65,8 @@ export function UserDataTable<TData extends User, TValue>({
   const { toast } = useToast()
   const [data, setData] = React.useState<TData[]>(initialData)
   const [isClient, setIsClient] = React.useState(false)
+  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
+
 
   React.useEffect(() => {
     setIsClient(true)
@@ -81,6 +85,16 @@ export function UserDataTable<TData extends User, TValue>({
     };
 
     handleStorageChange();
+
+     try {
+        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+        if (storedUser) {
+            setCurrentUser(JSON.parse(storedUser));
+        }
+     } catch (error) {
+        console.error("Failed to get current user from localStorage", error);
+     }
+
 
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('users-updated', handleStorageChange);
@@ -182,6 +196,8 @@ export function UserDataTable<TData extends User, TValue>({
     setUserToDelete(null);
   }
 
+  const canAddUsers = currentUser?.role === 'Super Admin';
+
   return (
     <div className="space-y-4">
       <UserForm
@@ -189,6 +205,7 @@ export function UserDataTable<TData extends User, TValue>({
         onOpenChange={setIsFormOpen}
         user={selectedUser}
         onSave={handleSaveUser}
+        currentUser={currentUser}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
@@ -210,13 +227,17 @@ export function UserDataTable<TData extends User, TValue>({
       </AlertDialog>
 
       <div className="flex items-center gap-2">
-            <Button onClick={handleOpenNew} className="md:hidden" size="icon">
-                <PlusCircle className="h-4 w-4" />
-                <span className="sr-only">Add User</span>
-            </Button>
-            <Button onClick={handleOpenNew} className="hidden md:flex">
-                <PlusCircle className="mr-2 h-4 w-4" /> Add User
-            </Button>
+            {canAddUsers && (
+                <>
+                    <Button onClick={handleOpenNew} className="md:hidden" size="icon">
+                        <PlusCircle className="h-4 w-4" />
+                        <span className="sr-only">Add User</span>
+                    </Button>
+                    <Button onClick={handleOpenNew} className="hidden md:flex">
+                        <PlusCircle className="mr-2 h-4 w-4" /> Add User
+                    </Button>
+                </>
+            )}
             <Input
             placeholder="Filter by name or email..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}

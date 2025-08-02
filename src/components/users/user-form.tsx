@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -49,9 +50,10 @@ interface UserFormProps {
   onOpenChange: (isOpen: boolean) => void
   user: User | null,
   onSave: (data: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => void
+  currentUser: User | null
 }
 
-export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) {
+export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: UserFormProps) {
   const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const [showPassword, setShowPassword] = useState(false)
@@ -101,6 +103,8 @@ export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) 
       onSave(dataToSave)
     })
   }
+
+  const canEditRole = currentUser?.role === 'Super Admin';
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -177,7 +181,7 @@ export function UserForm({ isOpen, onOpenChange, user, onSave }: UserFormProps) 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Role</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={!canEditRole}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a role" />
