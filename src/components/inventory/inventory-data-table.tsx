@@ -334,19 +334,21 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Filter by name..."
-            value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn("name")?.setFilterValue(event.target.value)
-            }
-            className="max-w-sm"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-           <Button variant="outline" onClick={() => setIsCategoryManagerOpen(true)}>
+      <div className="flex flex-col md:flex-row items-center justify-between gap-2">
+        <Input
+          placeholder="Filter by name..."
+          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+          onChange={(event) =>
+            table.getColumn("name")?.setFilterValue(event.target.value)
+          }
+          className="w-full md:max-w-sm"
+        />
+        <div className="flex w-full md:w-auto items-center justify-end gap-2">
+           <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsCategoryManagerOpen(true)}>
+             <ListTree className="h-4 w-4" />
+             <span className="sr-only">Edit Categories</span>
+          </Button>
+           <Button variant="outline" className="hidden md:flex" onClick={() => setIsCategoryManagerOpen(true)}>
              <ListTree className="mr-2 h-4 w-4" />
              Edit Categories
           </Button>
