@@ -30,9 +30,10 @@ export function AppSidebar() {
   const router = useRouter();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const [user, setUser] = React.useState<UserType | null>(null);
+  const [pendingUsersCount, setPendingUsersCount] = React.useState(0);
 
-  React.useEffect(() => {
-    const handleStorageChange = () => {
+
+  const handleStorageChange = React.useCallback(() => {
         try {
           const storedUserSession = window.localStorage.getItem(LOGGED_IN_USER_KEY);
           if (storedUserSession) {
@@ -43,25 +44,33 @@ export function AppSidebar() {
               const allUsers: UserType[] = JSON.parse(allUsersData);
               const fullUser = allUsers.find(u => u.id === session.id);
               setUser(fullUser || session);
+              const pendingCount = allUsers.filter(u => u.role === 'New User').length;
+              setPendingUsersCount(pendingCount);
             } else {
               setUser(session);
+              setPendingUsersCount(0);
             }
           } else {
             setUser(null);
+            setPendingUsersCount(0);
           }
         } catch (error) {
           console.error("Failed to retrieve user from storage", error);
         }
-    };
+    }, []);
     
+  React.useEffect(() => {
     handleStorageChange(); // Initial load
     
     window.addEventListener('storage', handleStorageChange);
+    // Add custom event listener for user data changes
+    window.addEventListener('users-updated', handleStorageChange);
     
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('users-updated', handleStorageChange);
     }
-  }, []);
+  }, [handleStorageChange]);
 
   const handleLogout = () => {
     try {
@@ -91,7 +100,7 @@ export function AppSidebar() {
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['Admin', 'Super Admin'] },
     { href: '/inventory', icon: Package, label: 'Inventory', roles: ['Admin', 'Super Admin', 'General Member'] },
     { href: '/due-items', icon: CalendarClock, label: 'Due Items', roles: ['Admin', 'Super Admin'] },
-    { href: '/users', icon: Users, label: 'User Management', roles: ['Admin', 'Super Admin'] },
+    { href: '/users', icon: Users, label: 'User Management', roles: ['Admin', 'Super Admin'], notificationCount: pendingUsersCount },
     { href: '/logs', icon: ScrollText, label: 'Inventory Log', roles: ['Admin', 'Super Admin'] },
   ];
 
@@ -132,9 +141,16 @@ export function AppSidebar() {
                 isActive={pathname.startsWith(item.href)}
                 tooltip={{ children: item.label }}
               >
-                <Link href={item.href}>
+                <Link href={item.href} className="relative">
                   <item.icon />
                   <span>{item.label}</span>
+                   {item.notificationCount && item.notificationCount > 0 && (
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-destructive flex items-center justify-center text-white text-[9px]">
+                        <span className={cn("transition-opacity duration-200", state === 'collapsed' && 'opacity-0')}>
+                            {/* For collapsed state, the dot itself is the indicator */}
+                        </span>
+                    </span>
+                   )}
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>

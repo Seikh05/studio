@@ -48,6 +48,7 @@ declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
     openForm: (user: TData) => void
     openDeleteDialog: (user: TData) => void,
+    approveUser: (user: TData) => void,
     currentUser: User | null
   }
 }
@@ -61,6 +62,10 @@ interface DataTableProps<TData, TValue> {
 
 const STORAGE_KEY = 'user-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
+
+const notifyUserUpdate = () => {
+    window.dispatchEvent(new Event('users-updated'));
+};
 
 export function UserDataTable<TData extends User, TValue>({
   columns,
@@ -102,6 +107,9 @@ export function UserDataTable<TData extends User, TValue>({
         setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
       },
+      approveUser: (user) => {
+        handleApproveUser(user);
+      },
       currentUser,
     }
   })
@@ -109,6 +117,32 @@ export function UserDataTable<TData extends User, TValue>({
   const handleOpenNew = () => {
     setSelectedUser(null)
     setIsFormOpen(true)
+  }
+
+  const handleApproveUser = (userToApprove: User) => {
+    try {
+        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
+        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
+
+        const updatedUsers = existingUsers.map((user) => 
+            user.id === userToApprove.id ? { ...user, role: 'General Member' } : user
+        );
+        
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+        toast({
+            title: "User Approved",
+            description: `${userToApprove.name} has been approved as a General Member.`,
+        });
+        onDataChange();
+        notifyUserUpdate(); // Notify sidebar to update dot
+    } catch(error) {
+        console.error("Failed to approve user:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to approve user."
+        })
+    }
   }
 
   const handleSaveUser = (formData: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => {
@@ -144,6 +178,7 @@ export function UserDataTable<TData extends User, TValue>({
             });
         }
         onDataChange();
+        notifyUserUpdate(); // Notify sidebar to update dot
         setIsFormOpen(false);
         setSelectedUser(null);
     } catch(error) {
@@ -177,6 +212,7 @@ export function UserDataTable<TData extends User, TValue>({
             description: `${userToDelete.name} has been removed.`,
         });
         onDataChange(); // Trigger data refresh in parent
+        notifyUserUpdate(); // Notify sidebar to update dot
         setIsDeleteDialogOpen(false);
         setUserToDelete(null);
     } catch(error) {

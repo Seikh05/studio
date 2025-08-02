@@ -3,7 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
-import { MoreHorizontal, ArrowUpDown } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, CheckSquare } from "lucide-react"
 import { format } from 'date-fns'
 import { useState, useEffect } from "react"
 
@@ -120,8 +120,11 @@ export const usersColumns: ColumnDef<User>[] = [
       // @ts-ignore
       const { currentUser } = table.options.meta || {};
       
-      const canManageUsers = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
+      const canApprove = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
+      const canManageUsers = currentUser?.role === 'Super Admin'; // Only Super Admin can edit/delete
       const isSelf = currentUser?.id === user.id;
+
+      if (!canApprove && !canManageUsers) return null;
 
       return (
         <div className="text-right">
@@ -134,6 +137,12 @@ export const usersColumns: ColumnDef<User>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              {canApprove && user.role === 'New User' && (
+                <DropdownMenuItem onClick={() => table.options.meta?.approveUser?.(user)}>
+                   <CheckSquare className="mr-2 h-4 w-4" />
+                   Approve User
+                </DropdownMenuItem>
+              )}
                {canManageUsers && (
                 <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(user)}>
                   Edit user
