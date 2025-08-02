@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -76,10 +77,16 @@ export function LoginForm() {
             const sessionUser = { ...user };
             delete sessionUser.password;
             window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
+            router.push("/inventory")
         } catch (error) {
             console.error("Failed to save user session", error);
+            toast({
+                variant: "destructive",
+                title: "System Error",
+                description: "Could not create user session. Storage may be full.",
+            })
+            setIsLoading(false)
         }
-        router.push("/inventory")
       } else {
         toast({
           variant: "destructive",
