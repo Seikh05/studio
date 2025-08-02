@@ -59,12 +59,53 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
+const STORAGE_KEY = 'inventory-data';
+
 export function InventoryDataTable<TData extends InventoryItem, TValue>({
   columns,
   data: initialData,
 }: DataTableProps<TData, TValue>) {
   const { toast } = useToast()
-  const [data, setData] = React.useState(initialData)
+  
+  const [data, setData] = React.useState<TData[]>(() => {
+    if (typeof window === 'undefined') {
+      return initialData;
+    }
+    try {
+      const storedData = window.localStorage.getItem(STORAGE_KEY);
+      if (storedData) {
+        return JSON.parse(storedData);
+      }
+    } catch (error) {
+      console.error("Failed to read from localStorage", error);
+    }
+    return initialData;
+  });
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+        try {
+            const storedData = window.localStorage.getItem(STORAGE_KEY);
+            if (!storedData) {
+                window.localStorage.setItem(STORAGE_KEY, JSON.stringify(initialData));
+            }
+        } catch (error) {
+            console.error("Failed to initialize localStorage", error);
+        }
+    }
+  }, [initialData]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+        try {
+            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error("Failed to save to localStorage", error);
+        }
+    }
+  }, [data]);
+
+
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
@@ -106,10 +147,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   }
   
   const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
-    // This is a client-side only implementation.
-    // In a real app, you'd call an API to save the data.
     if (selectedItem) {
-      // Update existing item
       const updatedItem = {
         ...selectedItem,
         ...formData,
@@ -123,7 +161,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         description: `${formData.name} has been successfully updated.`,
       })
     } else {
-      // Add new item
       const newItem: InventoryItem = {
         id: `ITEM-${Math.floor(Math.random() * 9000) + 1000}`,
         ...formData,
@@ -143,7 +180,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
 
   const handleDelete = () => {
     if (!itemToDelete) return;
-    // In a real app, you'd call an API to delete the item.
     setData(data.filter(item => item.id !== itemToDelete.id));
     toast({
       title: "Item Deleted",
