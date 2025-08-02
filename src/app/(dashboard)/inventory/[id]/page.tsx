@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
+const MAX_TRANSACTIONS_PER_ITEM = 50;
 
 export default function ItemLogPage() {
   const router = useRouter();
@@ -124,7 +125,7 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
     
-    const updatedTransactions = [transaction, ...transactions];
+    const updatedTransactions = [transaction, ...transactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(updatedTransactions, updatedItem);
 
@@ -159,11 +160,13 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
 
-    // Mark the original borrow transaction as returned
-    const updatedTransactions = [
+    // Mark the original borrow transaction as returned and add the new return transaction
+    const updatedTransactionList = [
       returnTransaction, 
       ...transactions.map(t => t.id === borrowTransaction.id ? { ...t, returned: true } : t)
     ];
+
+    const updatedTransactions = updatedTransactionList.slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(updatedTransactions, updatedItem);
 
