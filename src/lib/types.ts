@@ -42,7 +42,9 @@ export type ItemTransaction = {
   notes?: string;
   reminder: boolean;
   adminName: string;
-  returned?: boolean;
+  isSettled?: boolean; // For borrow transactions: true if fully returned
+  quantityReturned?: number; // For borrow transactions
+  relatedBorrowId?: string; // For return transactions
   itemName?: string;
 }
 
@@ -69,6 +71,9 @@ export type DueItem = {
   borrowerName: string;
   returnDate: string;
   daysRemaining: number;
+  quantityBorrowed: number;
+  quantityReturned: number;
+  quantityDue: number;
 }
 
 

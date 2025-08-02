@@ -4,7 +4,7 @@
 
 import * as React from 'react'
 import { format, formatRelative } from 'date-fns'
-import { AlertCircle, ArrowDownLeft, ArrowUpRight, Bell, Calendar, Undo2, User } from 'lucide-react'
+import { AlertCircle, ArrowDownLeft, ArrowUpRight, Bell, Calendar, CheckCircle, CircleDot, Undo2 } from 'lucide-react'
 import type { ItemTransaction } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
@@ -62,6 +62,10 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
          title += ` (${transaction.borrowerRegdNum})`
       }
     }
+    if (transaction.relatedBorrowId) {
+        title += ` (Ref: ${transaction.relatedBorrowId})`
+    }
+
 
     return `${title} (logged ${byAdmin})`;
   }
@@ -116,28 +120,38 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                         {transaction.notes && <span className="text-muted-foreground ml-2 italic"> &quot;{transaction.notes}&quot;</span>}
                       </p>
                     </div>
-                    {transaction.type === 'borrow' && (transaction.returnDate || transaction.reminder) && !transaction.returned && (
-                      <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                        {transaction.returnDate && (
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>Return by {format(new Date(transaction.returnDate), 'MMM d, yyyy')}</span>
-                          </div>
-                        )}
-                        {transaction.reminder && (
-                          <div className="flex items-center gap-1 text-primary font-medium">
-                            <Bell className="h-3 w-3" />
-                            <span>Reminder set</span>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    {transaction.type === 'borrow' && transaction.returned && (
-                        <p className="mt-2 text-xs text-green-600 dark:text-green-400 font-medium">Item returned</p>
+                    {transaction.type === 'borrow' && (
+                        <div className="mt-2 flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                            {transaction.isSettled ? (
+                                <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 font-medium">
+                                    <CheckCircle className="h-4 w-4" />
+                                    <span>All {transaction.quantity} items returned</span>
+                                </div>
+                            ) : (
+                                <>
+                                 {transaction.returnDate && (
+                                    <div className="flex items-center gap-1">
+                                        <Calendar className="h-3 w-3" />
+                                        <span>Due by {format(new Date(transaction.returnDate), 'MMM d, yyyy')}</span>
+                                    </div>
+                                    )}
+                                    {transaction.reminder && (
+                                    <div className="flex items-center gap-1 text-primary font-medium">
+                                        <Bell className="h-3 w-3" />
+                                        <span>Reminder set</span>
+                                    </div>
+                                    )}
+                                    <div className="flex items-center gap-1 text-amber-600 dark:text-amber-500 font-medium">
+                                        <CircleDot className="h-4 w-4" />
+                                        <span>{transaction.quantity - (transaction.quantityReturned || 0)} of {transaction.quantity} due</span>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     )}
                   </div>
                   <div className="flex-shrink-0 self-center flex items-center gap-2">
-                      {onReturn && transaction.type === 'borrow' && !transaction.returned && (
+                      {onReturn && transaction.type === 'borrow' && !transaction.isSettled && (
                         <Tooltip>
                           <TooltipTrigger asChild>
                              <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => onReturn(transaction)}>
@@ -145,7 +159,7 @@ export function TransactionHistory({ transactions, onReturn }: TransactionHistor
                               </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Mark as Returned</p>
+                            <p>Log a Return</p>
                           </TooltipContent>
                         </Tooltip>
                       )}

@@ -5,11 +5,11 @@ import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { LoaderCircle, CalendarClock, AlertCircle } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, DueItem } from '@/lib/types';
 import { differenceInDays, parseISO, startOfToday } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
@@ -49,23 +49,29 @@ export default function DueItemsPage() {
                         
                         const activeBorrows = itemTransactions.filter(t => 
                             t.type === 'borrow' && 
-                            !t.returned && 
+                            !t.isSettled && 
                             t.returnDate
                         );
 
                         activeBorrows.forEach(t => {
                             const returnDate = parseISO(t.returnDate!);
                             const daysRemaining = differenceInDays(returnDate, today);
+                            const quantityDue = t.quantity - (t.quantityReturned || 0);
 
-                            allDueItems.push({
-                                transactionId: t.id,
-                                itemId: item.id,
-                                itemName: item.name,
-                                itemImageUrl: item.imageUrl,
-                                borrowerName: t.borrowerName || 'Unknown',
-                                returnDate: t.returnDate!,
-                                daysRemaining: daysRemaining
-                            });
+                            if(quantityDue > 0) {
+                                allDueItems.push({
+                                    transactionId: t.id,
+                                    itemId: item.id,
+                                    itemName: item.name,
+                                    itemImageUrl: item.imageUrl,
+                                    borrowerName: t.borrowerName || 'Unknown',
+                                    returnDate: t.returnDate!,
+                                    daysRemaining: daysRemaining,
+                                    quantityBorrowed: t.quantity,
+                                    quantityReturned: t.quantityReturned || 0,
+                                    quantityDue: quantityDue,
+                                });
+                            }
                         });
                     }
                 });
@@ -106,8 +112,8 @@ export default function DueItemsPage() {
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {dueItems.map(item => (
                         <Link href={`/inventory/${item.itemId}`} key={item.transactionId}>
-                        <Card className="h-full hover:border-primary transition-colors">
-                            <CardContent className="p-4 flex flex-col items-center text-center">
+                        <Card className="h-full hover:border-primary transition-colors flex flex-col">
+                            <CardContent className="p-4 flex flex-col items-center text-center flex-1">
                                 <Image 
                                     src={item.itemImageUrl}
                                     alt={item.itemName}
@@ -133,6 +139,11 @@ export default function DueItemsPage() {
                                     on {parseISO(item.returnDate).toLocaleDateString()}
                                 </p>
                             </CardContent>
+                            <div className="p-2 border-t bg-muted/50 text-center">
+                                <Badge variant="secondary" className="text-sm font-bold">
+                                    {item.quantityDue} of {item.quantityBorrowed} Due
+                                </Badge>
+                            </div>
                         </Card>
                         </Link>
                     ))}

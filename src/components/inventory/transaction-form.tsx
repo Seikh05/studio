@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -41,7 +42,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 interface TransactionFormProps {
-  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'returned'>) => void;
+  onSubmit: (data: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'isSettled' | 'quantityReturned'>) => void;
 }
 
 export function TransactionForm({ onSubmit }: TransactionFormProps) {
@@ -67,7 +68,15 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 ...values,
                 returnDate: values.returnDate ? values.returnDate.toISOString() : undefined,
             });
-            form.reset();
+            form.reset({
+                ...form.getValues(),
+                type: values.type, // Keep the selected type
+                quantity: 1,
+                borrowerName: '',
+                borrowerRegdNum: '',
+                notes: '',
+                returnDate: undefined
+            });
         });
     }
 
@@ -94,9 +103,9 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                     </FormItem>
                                     <FormItem className="flex items-center space-x-3 space-y-0">
                                         <FormControl>
-                                            <RadioGroupItem value="return" />
+                                            <RadioGroupItem value="return" disabled />
                                         </FormControl>
-                                        <Label className="font-normal flex items-center gap-2"><PlusCircle className="text-green-600"/> Return / Increase</Label>
+                                        <Label className="font-normal flex items-center gap-2 text-muted-foreground/50"><PlusCircle className="text-muted-foreground/50"/> Return / Increase</Label>
                                     </FormItem>
                                 </RadioGroup>
                             </FormControl>
@@ -223,8 +232,8 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                             </FormItem>
                         )}
                     />
-                    <Button type="submit" disabled={isPending}>
-                        {transactionType === 'borrow' ? 'Log Borrow' : 'Log Return'}
+                    <Button type="submit" disabled={isPending || transactionType === 'return'}>
+                        Log Borrow
                     </Button>
                 </div>
             </form>

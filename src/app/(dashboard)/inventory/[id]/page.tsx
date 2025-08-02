@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { ArrowLeft, LoaderCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, LoaderCircle } from 'lucide-react';
 import type { InventoryItem, ItemTransaction, User, Notification } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { TransactionForm } from '@/components/inventory/transaction-form';
@@ -46,7 +46,8 @@ export default function ItemLogPage() {
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [transactionToReturn, setTransactionToReturn] = React.useState<ItemTransaction | null>(null);
   const [isReturnDialogOpen, setIsReturnDialogOpen] = React.useState(false);
-  const [returnConfirmText, setReturnConfirmText] = React.useState("");
+  const [returnQuantity, setReturnQuantity] = React.useState(1);
+
 
   React.useEffect(() => {
     setIsClient(true);
@@ -136,7 +137,7 @@ export default function ItemLogPage() {
   };
 
 
-  const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'returned'>) => {
+  const handleAddTransaction = (newTransaction: Omit<ItemTransaction, 'id' | 'timestamp' | 'adminName' | 'isSettled' | 'quantityReturned'>) => {
     if (!item || !currentUser) return;
 
     const transaction: ItemTransaction = {
@@ -144,7 +145,8 @@ export default function ItemLogPage() {
       id: `TXN-${Date.now()}`,
       timestamp: new Date().toISOString(),
       adminName: currentUser.name,
-      returned: false,
+      isSettled: false,
+      quantityReturned: 0,
     };
 
     const newStock = newTransaction.type === 'borrow' 
@@ -161,7 +163,7 @@ export default function ItemLogPage() {
     }
     
     if (transaction.type === 'borrow' && transaction.returnDate) {
-       const message = `${transaction.borrowerName} is due to return ${item.name} on ${format(new Date(transaction.returnDate), 'PPP')}.`
+       const message = `${transaction.borrowerName} is due to return ${item.name} (${transaction.quantity}) on ${format(new Date(transaction.returnDate), 'PPP')}.`
        addNotification(transaction, item, message);
     }
 
@@ -184,29 +186,42 @@ export default function ItemLogPage() {
 
   const handleOpenReturnDialog = (borrowTransaction: ItemTransaction) => {
     setTransactionToReturn(borrowTransaction);
+    const maxReturnQty = borrowTransaction.quantity - (borrowTransaction.quantityReturned || 0);
+    setReturnQuantity(maxReturnQty); // Default to max possible return
     setIsReturnDialogOpen(true);
-    setReturnConfirmText("");
   };
 
   const handleReturnTransaction = () => {
     if (!item || !currentUser || !transactionToReturn) return;
+
+    const quantityToReturn = Number(returnQuantity);
+    const maxReturnQty = transactionToReturn.quantity - (transactionToReturn.quantityReturned || 0);
+
+    if (isNaN(quantityToReturn) || quantityToReturn <= 0 || quantityToReturn > maxReturnQty) {
+        toast({
+            variant: "destructive",
+            title: "Invalid Quantity",
+            description: `Please enter a number between 1 and ${maxReturnQty}.`
+        });
+        return;
+    }
 
     // Create the new "return" transaction
     const returnTransaction: ItemTransaction = {
         id: `TXN-${Date.now()}`,
         timestamp: new Date().toISOString(),
         type: 'return',
-        quantity: transactionToReturn.quantity,
-        borrowerName: transactionToReturn.borrowerName, // Carry over borrower name
-        borrowerRegdNum: transactionToReturn.borrowerRegdNum, // Carry over regd num
-        notes: `Return of transaction ${transactionToReturn.id}`,
+        quantity: quantityToReturn,
+        borrowerName: transactionToReturn.borrowerName,
+        borrowerRegdNum: transactionToReturn.borrowerRegdNum,
+        notes: `Returned against borrow ID ${transactionToReturn.id}`,
         adminName: currentUser.name,
         reminder: false,
-        returned: false, // Not applicable for return transactions
+        relatedBorrowId: transactionToReturn.id,
     };
     
     // Update the stock
-    const newStock = item.stock + transactionToReturn.quantity;
+    const newStock = item.stock + quantityToReturn;
     const updatedItem: InventoryItem = {
       ...item,
       stock: newStock,
@@ -214,21 +229,40 @@ export default function ItemLogPage() {
       lastUpdated: new Date().toISOString(),
     };
 
-    // Mark the original borrow transaction as returned
-    const updatedOldTransactions = transactions.map(t => t.id === transactionToReturn.id ? { ...t, returned: true } : t);
+    // Update the original borrow transaction
+    const updatedOldTransactions = transactions.map(t => {
+      if (t.id === transactionToReturn.id) {
+        const newQuantityReturned = (t.quantityReturned || 0) + quantityToReturn;
+        return { 
+          ...t, 
+          quantityReturned: newQuantityReturned,
+          isSettled: newQuantityReturned >= t.quantity,
+        };
+      }
+      return t;
+    });
     
-    // Add the new return transaction and slice to maintain the limit
     const finalTransactions = [returnTransaction, ...updatedOldTransactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(finalTransactions, updatedItem);
 
-    // Add notification for the return
-    const message = `${item.name} (${transactionToReturn.quantity}) returned to stock from ${transactionToReturn.borrowerName}.`;
-    addNotification(returnTransaction, item, message);
+    const remaining = maxReturnQty - quantityToReturn;
+    let toastMessage: string;
+    let notifMessage: string;
+
+    if (remaining > 0) {
+        toastMessage = `${quantityToReturn} item(s) returned. ${remaining} still due.`;
+        notifMessage = `${item.name}: ${quantityToReturn} returned by ${transactionToReturn.borrowerName}. ${remaining} still due.`;
+    } else {
+        toastMessage = `Final ${quantityToReturn} item(s) returned. Transaction complete.`;
+        notifMessage = `${item.name}: All ${transactionToReturn.quantity} items returned by ${transactionToReturn.borrowerName}.`;
+    }
+
+    addNotification(returnTransaction, item, notifMessage);
 
     toast({
-      title: 'Item Returned',
-      description: `Logged return of ${transactionToReturn.quantity} item(s). Stock updated.`,
+      title: 'Item(s) Returned',
+      description: toastMessage,
     });
     
     setIsReturnDialogOpen(false);
@@ -259,31 +293,37 @@ export default function ItemLogPage() {
   const statusVariant: "default" | "secondary" | "destructive" =
     item.status === "In Stock" ? "default" : item.status === "Low Stock" ? "secondary" : "destructive";
 
+  const quantityDue = transactionToReturn ? transactionToReturn.quantity - (transactionToReturn.quantityReturned || 0) : 0;
+
   return (
     <>
       <AlertDialog open={isReturnDialogOpen} onOpenChange={setIsReturnDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to return this item?</AlertDialogTitle>
+            <AlertDialogTitle>Log Item Return</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will mark transaction <strong>{transactionToReturn?.id}</strong> as returned and update the stock.
-              To confirm, please type "confirm" in the box below.
+              Log a return for <strong>{item.name}</strong> from borrower <strong>{transactionToReturn?.borrowerName}</strong>. 
+              They currently have {quantityDue} item(s) due from borrow ID {transactionToReturn?.id}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
-            <Label htmlFor="confirm-return-input" className="sr-only">Confirm Return</Label>
+            <Label htmlFor="return-quantity-input">Quantity to Return</Label>
             <Input 
-              id="confirm-return-input"
-              value={returnConfirmText}
-              onChange={(e) => setReturnConfirmText(e.target.value)}
-              placeholder='Type "confirm" to proceed'
+              id="return-quantity-input"
+              type="number"
+              value={returnQuantity}
+              onChange={(e) => setReturnQuantity(Number(e.target.value))}
+              placeholder="e.g. 1"
+              max={quantityDue}
+              min={1}
             />
+             {returnQuantity > quantityDue && <p className="text-destructive text-sm mt-1">Cannot return more than {quantityDue} items.</p>}
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setTransactionToReturn(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction 
               onClick={handleReturnTransaction} 
-              disabled={returnConfirmText.toLowerCase() !== 'confirm'}
+              disabled={returnQuantity <= 0 || returnQuantity > quantityDue}
               className="bg-primary hover:bg-primary/90"
             >
               Confirm Return
