@@ -24,7 +24,6 @@ export type LogEntry = {
   id: string;
   timestamp: string;
   adminName: string;
-  adminAvatar: string;
   action: string;
   details: string;
 };

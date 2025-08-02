@@ -71,20 +71,17 @@ const notifyLogUpdate = () => {
 const addLogEntry = (action: string, details: string) => {
   try {
     let adminName = 'Admin User';
-    let adminAvatar = 'https://placehold.co/40x40.png';
 
     const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
     if (storedUser) {
       const user: User = JSON.parse(storedUser);
       adminName = user.name;
-      adminAvatar = user.avatarUrl;
     }
 
     const newLog: LogEntry = {
       id: `LOG-${Date.now()}`,
       timestamp: new Date().toISOString(),
       adminName,
-      adminAvatar,
       action,
       details,
     };

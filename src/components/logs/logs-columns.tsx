@@ -1,7 +1,6 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import Image from "next/image"
 import { formatRelative } from 'date-fns'
 import type { LogEntry } from "@/lib/types"
 import { Badge } from "../ui/badge"
@@ -34,14 +33,6 @@ export const logsColumns: ColumnDef<LogEntry>[] = [
       const log = row.original
       return (
         <div className="flex items-center gap-2">
-          <Image
-            src={log.adminAvatar}
-            alt={log.adminName}
-            width={24}
-            height={24}
-            className="rounded-full"
-            data-ai-hint="person avatar"
-          />
           <span className="font-medium">{log.adminName}</span>
         </div>
       )
