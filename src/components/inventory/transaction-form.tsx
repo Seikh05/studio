@@ -30,6 +30,9 @@ const formSchema = z.object({
 }).refine(data => data.type === 'return' || !!data.borrowerName, {
   message: "Borrower's name is required when borrowing an item.",
   path: ['borrowerName'],
+}).refine(data => data.type === 'return' || !!data.returnDate, {
+  message: "Expected return date is required when borrowing an item.",
+  path: ['returnDate'],
 });
 
 type FormData = z.infer<typeof formSchema>;
