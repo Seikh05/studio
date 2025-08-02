@@ -1,3 +1,4 @@
+
 'use client'
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -130,7 +131,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave, categories, inven
     }
 
     const foundItem = inventory.find(
-      (invItem) => invItem.name.toLowerCase().trim() === lowercasedName
+      (invItem) => invItem.name.toLowerCase().trim().includes(lowercasedName)
     );
 
     setSuggestedItem(foundItem || null);
