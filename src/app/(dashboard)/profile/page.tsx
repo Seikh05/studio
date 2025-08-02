@@ -59,24 +59,6 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
 
-  React.useEffect(() => {
-    setIsClient(true);
-    try {
-      const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        reset({
-          name: parsedUser.name,
-          email: parsedUser.email,
-          avatarUrl: parsedUser.avatarUrl,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to retrieve user from storage', error);
-    }
-  }, []);
-
   const {
     control,
     handleSubmit,
@@ -92,6 +74,24 @@ export default function ProfilePage() {
       avatarUrl: '',
     },
   });
+  
+  React.useEffect(() => {
+    setIsClient(true);
+    try {
+      const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
+      if (storedUser) {
+        const fullUser = JSON.parse(storedUser);
+        setUser(fullUser);
+        reset({
+          name: fullUser.name,
+          email: fullUser.email,
+          avatarUrl: fullUser.avatarUrl,
+        });
+      }
+    } catch (error) {
+      console.error('Failed to retrieve user from storage', error);
+    }
+  }, [reset]);
 
   const avatarPreview = watch('avatarUrl');
 
@@ -263,5 +263,3 @@ export default function ProfilePage() {
     </Card>
   );
 }
-
-    
