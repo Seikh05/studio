@@ -29,9 +29,9 @@ body {
     --ring: 246 74% 62%;
     --radius: 0.5rem;
 
-    --sidebar-background: 238 28% 14%;
+    --sidebar-background: 238 28% 14% / 0.8;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-accent: 238 28% 24%;
+    --sidebar-accent: 238 28% 24% / 0.8;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 238 28% 24%;
     --sidebar-ring: 246 100% 77%;
@@ -43,7 +43,7 @@ body {
     --chart-5: 27 87% 67%;
   }
   .dark {
-    --background: 238 28% 14%;
+    --background: 238 28% 10%;
     --foreground: 220 17% 95%;
     --card: 238 28% 16%;
     --card-foreground: 220 17% 95%;
@@ -63,9 +63,9 @@ body {
     --input: 238 28% 24%;
     --ring: 246 100% 77%;
 
-    --sidebar-background: 238 28% 14%;
+    --sidebar-background: 238 28% 14% / 0.8;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-accent: 238 28% 24%;
+    --sidebar-accent: 238 28% 24% / 0.8;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 238 28% 24%;
     --sidebar-ring: 246 100% 77%;
