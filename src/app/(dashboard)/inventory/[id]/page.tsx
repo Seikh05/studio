@@ -112,15 +112,13 @@ export default function ItemLogPage() {
     }
   }
 
-  const addNotification = (transaction: ItemTransaction, item: InventoryItem) => {
-    if (!transaction.returnDate) return;
-
+  const addNotification = (transaction: ItemTransaction, item: InventoryItem, message: string) => {
     const newNotification: Notification = {
       id: `NOTIF-${Date.now()}`,
       itemId: item.id,
       transactionId: transaction.id,
-      message: `${transaction.borrowerName} is due to return ${item.name} on ${format(new Date(transaction.returnDate), 'PPP')}.`,
-      dueDate: transaction.returnDate,
+      message: message,
+      dueDate: transaction.returnDate || new Date().toISOString(), // Use return date or now
       isRead: false,
       createdAt: new Date().toISOString(),
     };
@@ -162,8 +160,9 @@ export default function ItemLogPage() {
       return;
     }
     
-    if (transaction.type === 'borrow') {
-       addNotification(transaction, item);
+    if (transaction.type === 'borrow' && transaction.returnDate) {
+       const message = `${transaction.borrowerName} is due to return ${item.name} on ${format(new Date(transaction.returnDate), 'PPP')}.`
+       addNotification(transaction, item, message);
     }
 
     const updatedItem: InventoryItem = {
@@ -222,6 +221,10 @@ export default function ItemLogPage() {
     const finalTransactions = [returnTransaction, ...updatedOldTransactions].slice(0, MAX_TRANSACTIONS_PER_ITEM);
 
     handleTransactionUpdate(finalTransactions, updatedItem);
+
+    // Add notification for the return
+    const message = `${item.name} (${transactionToReturn.quantity}) returned to stock from ${transactionToReturn.borrowerName}.`;
+    addNotification(returnTransaction, item, message);
 
     toast({
       title: 'Item Returned',
