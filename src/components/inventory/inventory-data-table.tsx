@@ -1,3 +1,4 @@
+
 'use client'
 
 import * as React from "react"
@@ -48,6 +49,7 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import { CategoryManager } from "./category-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { Label } from "../ui/label"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
@@ -200,6 +202,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   const [selectedItem, setSelectedItem] = React.useState<TData | null>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
+  const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
 
   React.useEffect(() => {
     if (isMobile) {
@@ -234,6 +237,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       },
       openDeleteDialog: (item) => {
         setItemToDelete(item);
+        setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
       }
     }
@@ -335,11 +339,25 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the item
               <span className="font-semibold"> {itemToDelete?.name}</span> from your inventory.
+               To confirm, please type "confirm delete" in the box below.
             </AlertDialogDescription>
           </AlertDialogHeader>
+           <div className="py-2">
+            <Label htmlFor="confirm-delete-input" className="sr-only">Confirm Delete</Label>
+            <Input 
+              id="confirm-delete-input"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder='Type "confirm delete" to proceed'
+            />
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={deleteConfirmText.toLowerCase() !== 'confirm delete'}
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               Delete
             </AlertDialogAction>
