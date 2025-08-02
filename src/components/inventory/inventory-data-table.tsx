@@ -62,7 +62,7 @@ interface DataTableProps<TData, TValue> {
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const LOGS_STORAGE_KEY = 'logs-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
-const MAX_LOG_ENTRIES = 100;
+const MAX_LOG_ENTRIES = 50;
 
 const notifyLogUpdate = () => {
   window.dispatchEvent(new Event('logs-updated'));
@@ -93,10 +93,16 @@ const addLogEntry = (action: string, details: string) => {
     const existingLogs: LogEntry[] = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
     
     const updatedLogs = [newLog, ...existingLogs].slice(0, MAX_LOG_ENTRIES);
-    window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
+    
+    try {
+        window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
+    } catch (error) {
+        console.error("Failed to set log data in localStorage (quota may be exceeded):", error);
+    }
+    
     notifyLogUpdate();
   } catch (error) {
-    console.error("Failed to add log entry:", error);
+    console.error("Failed to create log entry:", error);
   }
 };
 
