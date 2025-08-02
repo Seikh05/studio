@@ -27,9 +27,12 @@ const formSchema = z.object({
   returnDate: z.date().optional(),
   notes: z.string().optional(),
   reminder: z.boolean().default(false),
-}).refine(data => data.type === 'return' || !!data.borrowerName, {
+}).refine(data => data.type === 'return' || (data.borrowerName && data.borrowerName.length > 0), {
   message: "Borrower's name is required when borrowing an item.",
   path: ['borrowerName'],
+}).refine(data => data.type === 'return' || (data.borrowerRegdNum && data.borrowerRegdNum.length > 0), {
+  message: "Registration number is required when borrowing an item.",
+  path: ['borrowerRegdNum'],
 }).refine(data => data.type === 'return' || !!data.returnDate, {
   message: "Expected return date is required when borrowing an item.",
   path: ['returnDate'],
@@ -175,7 +178,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                             name="borrowerRegdNum"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Regd. Number (Optional)</FormLabel>
+                                    <FormLabel>Registration Number</FormLabel>
                                     <FormControl>
                                         <Input placeholder="e.g. 21051234" {...field} />
                                     </FormControl>
