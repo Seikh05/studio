@@ -171,19 +171,31 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   
   const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'>) => {
     if (selectedItem) {
+      const oldStock = selectedItem.stock;
+      const newStock = Number(formData.stock);
+      const stockChange = newStock - oldStock;
+
       const updatedItem = {
         ...selectedItem,
         ...formData,
-        stock: Number(formData.stock),
+        stock: newStock,
         lastUpdated: new Date().toISOString(),
-        status: Number(formData.stock) > 0 ? (Number(formData.stock) < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
+        status: newStock > 0 ? (newStock < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
       }
       setData(data.map((item) => (item.id === selectedItem.id ? updatedItem : item) as TData));
       toast({
         title: "Item Updated",
         description: `${formData.name} has been successfully updated.`,
       })
-      addLogEntry('Item Updated', `Updated details for "${formData.name}".`);
+
+      if (stockChange !== 0) {
+          const action = stockChange > 0 ? 'Stock Increased' : 'Stock Decreased';
+          const details = `${action} for "${formData.name}". New stock: ${newStock} (${stockChange > 0 ? '+' : ''}${stockChange}).`;
+          addLogEntry(action, details);
+      } else {
+        addLogEntry('Item Details Updated', `Updated details for "${formData.name}".`);
+      }
+
     } else {
       const newItem: InventoryItem = {
         id: `ITEM-${Math.floor(Math.random() * 9000) + 1000}`,
@@ -197,7 +209,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
         title: "Item Added",
         description: `${formData.name} has been successfully created.`,
       })
-      addLogEntry('Item Added', `Added new item "${formData.name}".`);
+      addLogEntry('Item Added', `Added new item "${formData.name}" with initial stock of ${newItem.stock}.`);
     }
     setIsFormOpen(false);
     setSelectedItem(null);

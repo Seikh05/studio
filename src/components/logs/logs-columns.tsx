@@ -12,9 +12,9 @@ export const logsColumns: ColumnDef<LogEntry>[] = [
     header: "Action",
     cell: ({ row }) => {
       const action = row.getValue("action") as string
-      let variant: "default" | "secondary" | "outline" = "outline"
-      if (action.includes("Add")) variant = "default"
-      if (action.includes("Delete")) variant = "destructive"
+      let variant: "default" | "secondary" | "outline" | "destructive" = "outline"
+      if (action.includes("Add") || action.includes("Increase")) variant = "default"
+      if (action.includes("Delete") || action.includes("Decrease")) variant = "destructive"
       if (action.includes("Update") || action.includes("Change")) variant = "secondary"
 
       return <Badge variant={variant} className="capitalize">{action}</Badge>
