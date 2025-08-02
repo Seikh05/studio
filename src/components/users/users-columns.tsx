@@ -120,9 +120,11 @@ export const usersColumns: ColumnDef<User>[] = [
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(user)}>
-                Edit user
-              </DropdownMenuItem>
+               {canManageUsers && (
+                <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(user)}>
+                  Edit user
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>Change permissions</DropdownMenuItem>
               {canManageUsers && !isSelf && (
                 <>
