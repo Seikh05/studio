@@ -41,6 +41,8 @@ const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   role: z.enum(["Admin", "Super Admin", "General Member"]),
   password: z.string().min(8, "Password must be at least 8 characters.").optional().or(z.literal('')),
+  phone: z.string().optional(),
+  regdNum: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -65,6 +67,8 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
       email: "",
       role: "Admin",
       password: "",
+      phone: "",
+      regdNum: "",
     },
   })
   
@@ -76,6 +80,8 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
                 email: user.email,
                 role: user.role,
                 password: "", // Don't pre-fill password for existing users
+                phone: user.phone || "",
+                regdNum: user.regdNum || "",
             })
         } else {
             form.reset({
@@ -83,6 +89,8 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
                 email: "",
                 role: "General Member",
                 password: "",
+                phone: "",
+                regdNum: "",
             })
         }
     }
@@ -175,6 +183,32 @@ export function UserForm({ isOpen, onOpenChange, user, onSave, currentUser }: Us
                       </FormItem>
                     )}
                   />
+                 <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 9876543210" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={form.control}
+                  name="regdNum"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Registration Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 21051234" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <FormField
                   control={form.control}
                   name="role"

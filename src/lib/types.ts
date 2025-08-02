@@ -21,6 +21,7 @@ export type User = {
   avatarUrl: string;
   password?: string;
   phone?: string;
+  regdNum?: string;
 };
 
 export type LogEntry = {

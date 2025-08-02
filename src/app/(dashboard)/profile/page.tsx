@@ -15,6 +15,7 @@ import { LoaderCircle, UploadCloud, Trash2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const USER_STORAGE_KEY = 'user-data';
@@ -25,6 +26,8 @@ const profileSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
   email: z.string().email(),
   avatarUrl: z.string().optional(),
+  phone: z.string().optional(),
+  regdNum: z.string().optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -51,6 +54,8 @@ export default function ProfilePage() {
       name: '',
       email: '',
       avatarUrl: '',
+      phone: '',
+      regdNum: '',
     },
   });
   
@@ -65,6 +70,8 @@ export default function ProfilePage() {
           name: fullUser.name,
           email: fullUser.email,
           avatarUrl: fullUser.avatarUrl,
+          phone: fullUser.phone,
+          regdNum: fullUser.regdNum,
         });
       }
     } catch (error) {
@@ -168,70 +175,98 @@ export default function ProfilePage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
-            <Label>Profile Picture</Label>
-            <div className="flex items-center gap-4">
-              <Avatar className="h-20 w-20">
-                <AvatarImage src={avatarPreview} alt={user.name} data-ai-hint="person avatar"/>
-                <AvatarFallback className="text-2xl">{getInitials(user.name)}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-1 flex-col gap-2">
-                 <label
-                    htmlFor="avatar-upload"
-                    className={cn(
-                        "relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80",
-                        "flex items-center justify-center gap-2 border border-dashed border-input p-2 text-center text-sm",
-                        isUploading && "cursor-not-allowed opacity-50"
+          <ScrollArea className="h-[60vh] p-4">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Profile Picture</Label>
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-20 w-20">
+                    <AvatarImage src={avatarPreview} alt={user.name} data-ai-hint="person avatar"/>
+                    <AvatarFallback className="text-2xl">{getInitials(user.name)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-1 flex-col gap-2">
+                    <label
+                        htmlFor="avatar-upload"
+                        className={cn(
+                            "relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80",
+                            "flex items-center justify-center gap-2 border border-dashed border-input p-2 text-center text-sm",
+                            isUploading && "cursor-not-allowed opacity-50"
+                        )}
+                        >
+                        {isUploading ? (
+                            <>
+                                <LoaderCircle className="h-5 w-5 animate-spin" />
+                                <span>Uploading...</span>
+                            </>
+                        ) : (
+                            <>
+                                <UploadCloud className="h-5 w-5" />
+                                <span>Change Picture</span>
+                            </>
+                        )}
+                        <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" disabled={isUploading}/>
+                    </label>
+                    {showRemoveButton && (
+                      <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} disabled={isUploading}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Remove
+                      </Button>
                     )}
-                    >
-                    {isUploading ? (
-                        <>
-                            <LoaderCircle className="h-5 w-5 animate-spin" />
-                            <span>Uploading...</span>
-                        </>
-                    ) : (
-                        <>
-                            <UploadCloud className="h-5 w-5" />
-                            <span>Change Picture</span>
-                        </>
-                    )}
-                    <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" disabled={isUploading}/>
-                </label>
-                {showRemoveButton && (
-                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} disabled={isUploading}>
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Remove
-                  </Button>
-                )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
-          
-          <Controller
-            name="name"
-            control={control}
-            render={({ field }) => (
-                <div className='space-y-2'>
-                    <Label htmlFor='name'>Full Name</Label>
-                    <Input id="name" {...field} />
-                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                </div>
-            )}
-           />
+              
+              <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                    <div className='space-y-2'>
+                        <Label htmlFor='name'>Full Name</Label>
+                        <Input id="name" {...field} />
+                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                    </div>
+                )}
+              />
 
-          <Controller
-            name="email"
-            control={control}
-            render={({ field }) => (
-                <div className='space-y-2'>
-                    <Label htmlFor='email'>Email Address</Label>
-                    <Input id="email" type="email" {...field} disabled />
-                     {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
-                </div>
-            )}
-           />
+              <Controller
+                name="email"
+                control={control}
+                render={({ field }) => (
+                    <div className='space-y-2'>
+                        <Label htmlFor='email'>Email Address</Label>
+                        <Input id="email" type="email" {...field} disabled />
+                        {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
+                    </div>
+                )}
+              />
+
+              <Controller
+                name="phone"
+                control={control}
+                render={({ field }) => (
+                    <div className='space-y-2'>
+                        <Label htmlFor='phone'>Phone Number (Optional)</Label>
+                        <Input id="phone" {...field} placeholder="e.g., 9876543210" />
+                        {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
+                    </div>
+                )}
+              />
+
+              <Controller
+                name="regdNum"
+                control={control}
+                render={({ field }) => (
+                    <div className='space-y-2'>
+                        <Label htmlFor='regdNum'>Registration Number (Optional)</Label>
+                        <Input id="regdNum" {...field} placeholder="e.g., 21051234" />
+                        {errors.regdNum && <p className="text-sm text-destructive">{errors.regdNum.message}</p>}
+                    </div>
+                )}
+              />
+            </div>
+          </ScrollArea>
           
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Back
             </Button>

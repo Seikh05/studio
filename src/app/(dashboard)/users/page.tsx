@@ -19,6 +19,8 @@ const initialUsers: User[] = [
       status: 'Active',
       lastLogin: '2024-07-28T10:00:00Z',
       avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '9876543210',
+      regdNum: '21050001',
     },
     {
       id: 'USR-002',
@@ -28,6 +30,8 @@ const initialUsers: User[] = [
       status: 'Active',
       lastLogin: '2024-07-27T15:30:00Z',
       avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '9876543211',
+      regdNum: '21050002',
     },
     {
       id: 'USR-003',
@@ -46,6 +50,7 @@ const initialUsers: User[] = [
       status: 'Active',
       lastLogin: '2024-07-29T08:00:00Z',
       avatarUrl: 'https://placehold.co/40x40.png',
+      regdNum: '21050003',
     },
     {
       id: 'USR-005',
@@ -55,6 +60,7 @@ const initialUsers: User[] = [
       status: 'Active',
       lastLogin: new Date().toISOString(),
       avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '1234567890'
     },
 ];
 

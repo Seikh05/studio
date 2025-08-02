@@ -99,6 +99,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                 const selectedUser = users.find(u => u.id === finalValues.borrowerId);
                 if (selectedUser) {
                     finalValues.borrowerName = selectedUser.name;
+                    // The form values (phone, regdNum) will be used directly
                 }
             }
 
@@ -127,10 +128,12 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             if (selectedUser) {
                 form.setValue('borrowerName', selectedUser.name);
                 form.setValue('borrowerPhone', selectedUser.phone || '');
+                form.setValue('borrowerRegdNum', selectedUser.regdNum || '');
             }
         } else {
             form.setValue('borrowerName', '');
             form.setValue('borrowerPhone', '');
+            form.setValue('borrowerRegdNum', '');
         }
     }
 
@@ -263,19 +266,6 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="borrowerRegdNum"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Registration Number (Optional)</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. 21051234" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
                             </div>
                         )}
                         <FormField
@@ -287,6 +277,22 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                     <FormControl>
                                         <Input 
                                             placeholder="e.g. 9876543210" 
+                                            {...field}
+                                        />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="borrowerRegdNum"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Registration Number (Optional)</FormLabel>
+                                    <FormControl>
+                                        <Input 
+                                            placeholder="e.g. 21051234" 
                                             {...field}
                                         />
                                     </FormControl>
