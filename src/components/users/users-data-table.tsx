@@ -209,7 +209,7 @@ export function UserDataTable<TData extends User, TValue>({
           }
           className="w-full md:max-w-sm"
         />
-        <div className="flex justify-end">
+        <div className="flex justify-start md:justify-end">
             <Button onClick={handleOpenNew} className="md:hidden" size="icon">
                 <PlusCircle className="h-4 w-4" />
                 <span className="sr-only">Add User</span>
