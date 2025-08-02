@@ -152,7 +152,7 @@ export function AppSidebar() {
                    {item.notificationCount && item.notificationCount > 0 && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-destructive flex items-center justify-center text-white text-[9px]">
                         <span className={cn("transition-opacity duration-200", state === 'collapsed' && 'opacity-0')}>
-                            {/* For collapsed state, the dot itself is the indicator */}
+                           
                         </span>
                     </span>
                    )}
@@ -171,7 +171,7 @@ export function AppSidebar() {
         )}
         <div className={cn('flex items-center gap-3 w-full', state === 'collapsed' && 'justify-center')}>
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
+            <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar"/>
             <AvatarFallback>{user ? getInitials(user.name) : 'AU'}</AvatarFallback>
           </Avatar>
           <div className={cn('flex flex-col grow min-w-0', state === 'collapsed' && 'hidden')}>
