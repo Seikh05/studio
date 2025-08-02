@@ -26,7 +26,7 @@ const LOGGED_IN_USER_KEY = 'logged-in-user';
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { state } = useSidebar();
+  const { state, isMobile } = useSidebar();
   const [user, setUser] = React.useState<UserType | null>(null);
 
   React.useEffect(() => {
@@ -99,18 +99,6 @@ export function AppSidebar() {
                     Robostreaks
                 </span>
             </div>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className={cn("h-8 w-8", state === 'collapsed' && 'hidden')} asChild>
-                        <Link href="/dashboard">
-                            <ChevronLeft />
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                    <p>Back to Home</p>
-                </TooltipContent>
-            </Tooltip>
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2 flex-1">
@@ -131,7 +119,7 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2">
         <div className={cn('flex items-center gap-3 w-full', state === 'collapsed' && 'justify-center')}>
           <Avatar className="h-9 w-9">
             <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
@@ -145,6 +133,14 @@ export function AppSidebar() {
             <LogOut className="w-4 h-4" />
           </Button>
         </div>
+        {isMobile && (
+            <Button variant="outline" className="w-full mt-2" asChild>
+                <Link href="/dashboard">
+                    <ChevronLeft />
+                    Back to Home
+                </Link>
+            </Button>
+        )}
       </SidebarFooter>
     </Sidebar>
   );
