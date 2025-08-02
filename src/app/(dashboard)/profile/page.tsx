@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle, UploadCloud } from 'lucide-react';
+import { LoaderCircle, UploadCloud, Trash2 } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
@@ -118,6 +118,14 @@ export default function ProfilePage() {
       }
     }
   };
+
+  const handleRemoveImage = () => {
+    setValue('avatarUrl', '', { shouldValidate: true, shouldDirty: true });
+    toast({
+        title: 'Image Removed',
+        description: 'Your profile picture has been removed. Click "Save Changes" to confirm.',
+    });
+  }
   
   const getInitials = (name: string) => {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase();
@@ -128,7 +136,7 @@ export default function ProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = { ...user, ...data };
+      const updatedUser = { ...user, ...data, avatarUrl: data.avatarUrl || `https://placehold.co/40x40.png` };
       
       // Update the logged-in user session
       window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
@@ -185,12 +193,12 @@ export default function ProfilePage() {
                 <AvatarImage src={avatarPreview} alt={user.name} data-ai-hint="person avatar"/>
                 <AvatarFallback className="text-2xl">{getInitials(user.name)}</AvatarFallback>
               </Avatar>
-              <div className="flex-1">
+              <div className="flex flex-1 flex-col gap-2">
                  <label
                     htmlFor="avatar-upload"
                     className={cn(
                         "relative cursor-pointer rounded-md font-semibold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 hover:text-primary/80",
-                        "flex items-center justify-center gap-2 border border-dashed border-input p-4 text-center text-sm",
+                        "flex items-center justify-center gap-2 border border-dashed border-input p-2 text-center text-sm",
                         isUploading && "cursor-not-allowed opacity-50"
                     )}
                     >
@@ -207,6 +215,12 @@ export default function ProfilePage() {
                     )}
                     <input id="avatar-upload" name="avatar-upload" type="file" className="sr-only" onChange={handleImageChange} accept="image/*" disabled={isUploading}/>
                 </label>
+                {avatarPreview && (
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemoveImage} disabled={isUploading}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -249,3 +263,5 @@ export default function ProfilePage() {
     </Card>
   );
 }
+
+    
