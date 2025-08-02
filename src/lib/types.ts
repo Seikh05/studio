@@ -60,6 +60,16 @@ export type Notification = {
   createdAt: string;
 };
 
+export type DueItem = {
+  transactionId: string;
+  itemId: string;
+  itemName: string;
+  itemImageUrl: string;
+  borrowerName: string;
+  returnDate: string;
+  daysRemaining: number;
+}
+
 
 // Re-exporting AI types to be used in client components
 export type {
