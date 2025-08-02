@@ -20,8 +20,8 @@ export type User = {
   lastLogin: string;
   avatarUrl: string;
   password?: string;
-  phone?: string;
-  regdNum?: string;
+  phone: string;
+  regdNum: string;
 };
 
 export type LogEntry = {

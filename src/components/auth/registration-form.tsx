@@ -24,6 +24,8 @@ const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email." }),
   password: z.string().min(8, { message: "Password must be at least 8 characters." }),
+  phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
+  regdNum: z.string().min(4, { message: "Registration number is required." }),
 })
 
 const USER_STORAGE_KEY = 'user-data';
@@ -43,6 +45,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       name: "",
       email: "",
       password: "",
+      phone: "",
+      regdNum: ""
     },
   })
 
@@ -70,6 +74,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           name: values.name,
           email: values.email,
           password: values.password,
+          phone: values.phone,
+          regdNum: values.regdNum,
           role: 'New User',
           status: 'Active',
           lastLogin: new Date().toISOString(),
@@ -127,6 +133,32 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
               <FormLabel>Email</FormLabel>
               <FormControl>
                 <Input type="email" placeholder="you@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="regdNum"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Registration Number</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 21051234" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+         <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone Number</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 9876543210" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
