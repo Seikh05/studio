@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '../ui/button';
 import type { User as UserType } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
+import { Badge } from '../ui/badge';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const ALL_USERS_KEY = 'user-data';
@@ -148,13 +149,17 @@ export function AppSidebar() {
               >
                 <Link href={item.href} className="relative">
                   <item.icon />
-                  <span>{item.label}</span>
+                  <span className="flex-1">{item.label}</span>
                    {item.notificationCount && item.notificationCount > 0 && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 h-2.5 w-2.5 rounded-full bg-destructive flex items-center justify-center text-white text-[9px]">
-                        <span className={cn("transition-opacity duration-200", state === 'collapsed' && 'opacity-0')}>
-                           
-                        </span>
-                    </span>
+                     <Badge 
+                        variant="destructive" 
+                        className={cn(
+                            "h-5 w-5 justify-center p-0 transition-opacity duration-200",
+                            state === 'collapsed' && 'opacity-0'
+                        )}
+                     >
+                        {item.notificationCount}
+                     </Badge>
                    )}
                 </Link>
               </SidebarMenuButton>
