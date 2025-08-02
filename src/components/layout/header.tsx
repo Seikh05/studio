@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Bell, LifeBuoy, LogOut, Settings, User, Inbox } from 'lucide-react';
+import { Bell, LifeBuoy, LogOut, Settings, User, Inbox, Check } from 'lucide-react';
 import Link from 'next/link';
 import type { User as UserType, Notification } from '@/lib/types';
 import { Badge } from '../ui/badge';
@@ -99,6 +99,13 @@ export function AppHeader() {
     router.push(`/inventory/${notification.itemId}`);
   };
 
+  const handleMarkAllAsRead = () => {
+    const updatedNotifications = notifications.map(n => ({ ...n, isRead: true }));
+    setNotifications(updatedNotifications);
+    window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updatedNotifications));
+  };
+
+
   const getInitials = (name: string) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase();
   };
@@ -153,6 +160,15 @@ export function AppHeader() {
                     )}
                     </ScrollArea>
                 </DropdownMenuGroup>
+                {unreadCount > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={handleMarkAllAsRead} className="flex items-center justify-center cursor-pointer text-sm font-medium text-primary hover:text-primary focus:text-primary focus:bg-primary/10">
+                        <Check className="mr-2 h-4 w-4" />
+                        <span>Mark all as read</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
             </DropdownMenuContent>
         </DropdownMenu>
 
