@@ -41,7 +41,7 @@ const formSchema = z.object({
   name: z.string().min(3, "Item name must be at least 3 characters."),
   category: z.string().min(1, "Category is required."),
   stock: z.coerce.number().min(0, "Stock can't be negative."),
-  description: z.string().min(10, "Description must be at least 10 characters long."),
+  description: z.string().optional(),
   imageUrl: z.string().url("Invalid image URL").optional().or(z.literal('')),
 })
 
@@ -143,6 +143,7 @@ export function ItemForm({ isOpen, onOpenChange, item, onSave }: ItemFormProps) 
     startTransition(() => {
       onSave({
         ...values,
+        description: values.description || '',
         imageUrl: values.imageUrl || 'https://placehold.co/80x80.png'
       })
     })
