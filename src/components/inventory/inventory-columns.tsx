@@ -3,7 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
-import { MoreHorizontal, ArrowUpDown, Eye } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Eye, Edit, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -15,20 +15,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
 import type { InventoryItem, User } from "@/lib/types"
 
 const ActionsCell = ({ row, table }: { row: any, table: any }) => {
   const item = row.original as InventoryItem;
   const router = useRouter();
-  const { currentUser } = table.options.meta || {};
+  const { currentUser, openForm, openDeleteDialog } = table.options.meta || {};
+
+  const canManage = currentUser?.role !== 'General Member';
+
+  if (!canManage) return null;
 
   return (
     <div className="text-right">
-        <Button variant="outline" size="sm" onClick={() => router.push(`/inventory/${item.id}`)}>
+       <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => router.push(`/inventory/${item.id}`)}>
             <Eye className="mr-2 h-4 w-4" />
             View Log
-        </Button>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => openForm?.(item)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit Item
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem 
+            className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            onClick={() => openDeleteDialog?.(item)}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Item
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };
@@ -73,9 +98,9 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
     accessorKey: "category",
     header: "Category",
   },
-  {
+    {
     accessorKey: "stock",
-    header: "Stock",
+    header: () => <div className="text-right">Stock</div>,
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("stock"))
       return <div className="text-right font-medium">{amount}</div>

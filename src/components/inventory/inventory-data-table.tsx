@@ -216,7 +216,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     if (isMobile) {
       setColumnVisibility({
         category: false,
-        status: false,
       })
     } else {
       setColumnVisibility({})
