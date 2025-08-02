@@ -26,7 +26,7 @@ const LOGGED_IN_USER_KEY = 'logged-in-user';
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, isMobile } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const [user, setUser] = React.useState<UserType | null>(null);
 
   React.useEffect(() => {
@@ -60,6 +60,11 @@ export function AppSidebar() {
     }
     router.push('/login');
   };
+
+  const handleBackToHome = () => {
+    router.push('/dashboard');
+    setOpenMobile(false);
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -121,11 +126,9 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2 flex flex-col gap-2">
         {isMobile && (
-            <Button variant="outline" className="w-full" asChild>
-                <Link href="/dashboard">
-                    <ChevronLeft />
-                    Back to Home
-                </Link>
+            <Button variant="outline" className="w-full" onClick={handleBackToHome}>
+                <ChevronLeft />
+                Back to Home
             </Button>
         )}
         <div className={cn('flex items-center gap-3 w-full', state === 'collapsed' && 'justify-center')}>
