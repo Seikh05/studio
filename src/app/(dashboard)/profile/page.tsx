@@ -70,8 +70,8 @@ export default function ProfilePage() {
           name: fullUser.name,
           email: fullUser.email,
           avatarUrl: fullUser.avatarUrl,
-          phone: fullUser.phone,
-          regdNum: fullUser.regdNum,
+          phone: fullUser.phone || '',
+          regdNum: fullUser.regdNum || '',
         });
       }
     } catch (error) {
