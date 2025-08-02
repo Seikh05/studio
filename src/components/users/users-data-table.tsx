@@ -180,6 +180,7 @@ export function UserDataTable<TData extends User, TValue>({
         });
         onDataChange();
         notifyUserUpdate(); // Notify sidebar to update dot
+        setShowPendingOnly(false); // Reset the filter
     } catch(error) {
         console.error("Failed to approve user:", error);
         toast({
@@ -283,6 +284,7 @@ export function UserDataTable<TData extends User, TValue>({
         });
         onDataChange();
         notifyUserUpdate();
+        setShowPendingOnly(false); // Reset the filter
         setIsDenyDialogOpen(false);
         setUserToDeny(null);
     } catch(error) {
