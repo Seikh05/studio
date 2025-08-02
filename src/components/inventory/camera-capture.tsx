@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle, Camera, Video, VideoOff } from 'lucide-react';
+import { LoaderCircle, Camera, VideoOff } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 
 interface CameraCaptureProps {
@@ -25,25 +25,18 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
-  const [stream, setStream] = React.useState<MediaStream | null>(null);
-
+  
   React.useEffect(() => {
+    let stream: MediaStream | null = null;
+    
     const getCameraPermission = async () => {
-      if (!isOpen) {
-        // Stop camera stream when dialog is closed
-        if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          setStream(null);
-        }
-        return;
-      }
+      if (!isOpen) return;
 
       try {
-        const cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
-        setStream(cameraStream);
         if (videoRef.current) {
-          videoRef.current.srcObject = cameraStream;
+          videoRef.current.srcObject = stream;
         }
       } catch (error) {
         console.error('Error accessing camera:', error);
@@ -63,7 +56,7 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
             stream.getTracks().forEach(track => track.stop());
         }
     }
-  }, [isOpen, toast, stream]);
+  }, [isOpen, toast]);
 
 
   const handleCapture = () => {
