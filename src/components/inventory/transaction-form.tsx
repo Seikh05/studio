@@ -19,7 +19,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Switch } from '../ui/switch';
 import { useTransition, useState, useEffect } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Combobox } from '../ui/combobox';
 
 const formSchema = z.object({
   type: z.enum(['borrow', 'return'], { required_error: 'You must select a transaction type.' }),
@@ -123,7 +123,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
 
     const handleBorrowerChange = (id: string) => {
         form.setValue('borrowerId', id);
-        if (id !== 'other') {
+        if (id && id !== 'other') {
             const selectedUser = users.find(u => u.id === id);
             if (selectedUser) {
                 form.setValue('borrowerName', selectedUser.name);
@@ -136,6 +136,15 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
             form.setValue('borrowerRegdNum', '');
         }
     }
+    
+    const userOptions = React.useMemo(() => {
+        const options = users.map(user => ({
+            value: user.id,
+            label: `${user.name} (${user.role})`
+        }));
+        // Add "Other" option at the top
+        return [{ value: 'other', label: 'Other...' }, ...options];
+    }, [users]);
 
 
     return (
@@ -233,19 +242,14 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                             render={({ field }) => (
                                 <FormItem>
                                     <FormLabel>Borrower</FormLabel>
-                                    <Select onValueChange={handleBorrowerChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a registered user or 'Other'" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="other">Other...</SelectItem>
-                                        {users.map((user) => (
-                                            <SelectItem key={user.id} value={user.id}>{user.name} ({user.role})</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                    </Select>
+                                     <Combobox
+                                        options={userOptions}
+                                        value={field.value || ''}
+                                        onChange={handleBorrowerChange}
+                                        placeholder="Select a registered user or 'Other...'"
+                                        searchPlaceholder="Search users..."
+                                        emptyPlaceholder="No users found."
+                                    />
                                     <FormMessage />
                                 </FormItem>
                             )}
@@ -278,6 +282,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                         <Input 
                                             placeholder="e.g. 9876543210" 
                                             {...field}
+                                            value={field.value || ''}
                                         />
                                     </FormControl>
                                     <FormMessage />
@@ -294,6 +299,7 @@ export function TransactionForm({ onSubmit }: TransactionFormProps) {
                                         <Input 
                                             placeholder="e.g. 21051234" 
                                             {...field}
+                                            value={field.value || ''}
                                         />
                                     </FormControl>
                                     <FormMessage />
