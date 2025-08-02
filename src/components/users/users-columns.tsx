@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
 import { MoreHorizontal, ArrowUpDown } from "lucide-react"
 import { format } from 'date-fns'
+import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,6 +17,16 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { User } from "@/lib/types"
+
+const LastLoginCell = ({ dateString }: { dateString: string }) => {
+  const [formattedDate, setFormattedDate] = useState<string | null>(null);
+
+  useEffect(() => {
+    setFormattedDate(format(new Date(dateString), "PPp"));
+  }, [dateString]);
+
+  return <span>{formattedDate || 'Loading...'}</span>;
+};
 
 export const usersColumns: ColumnDef<User>[] = [
   {
@@ -76,7 +87,8 @@ export const usersColumns: ColumnDef<User>[] = [
     accessorKey: "lastLogin",
     header: "Last Login",
     cell: ({ row }) => {
-      return <span>{format(new Date(row.getValue("lastLogin")), "PPp")}</span>
+      const lastLogin = row.getValue("lastLogin") as string
+      return <LastLoginCell dateString={lastLogin} />;
     },
   },
   {

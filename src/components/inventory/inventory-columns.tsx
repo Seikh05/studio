@@ -71,7 +71,7 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   },
   {
     accessorKey: "stock",
-    header: () => <div className="text-right">Stock</div>,
+    header: "Stock",
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue("stock"))
       return <div className="text-right font-medium">{amount}</div>
