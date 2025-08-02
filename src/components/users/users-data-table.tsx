@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, Trash2 } from "lucide-react"
+import { PlusCircle, Trash2, UserCheck } from "lucide-react"
 import type { User } from "@/lib/types"
 import { UserForm } from "./user-form"
 import { Card } from "../ui/card"
@@ -88,6 +88,9 @@ export function UserDataTable<TData extends User, TValue>({
   const [isDenyDialogOpen, setIsDenyDialogOpen] = React.useState(false);
   const [userToDeny, setUserToDeny] = React.useState<TData | null>(null);
   const [denyConfirmText, setDenyConfirmText] = React.useState("");
+  const [showPendingOnly, setShowPendingOnly] = React.useState(false);
+
+  const pendingUsersCount = React.useMemo(() => data.filter(user => user.role === 'New User').length, [data]);
 
 
   const table = useReactTable({
@@ -124,6 +127,14 @@ export function UserDataTable<TData extends User, TValue>({
       currentUser,
     }
   })
+
+  React.useEffect(() => {
+    if (showPendingOnly) {
+      table.getColumn('role')?.setFilterValue('New User');
+    } else {
+      table.getColumn('role')?.setFilterValue(undefined);
+    }
+  }, [showPendingOnly, table]);
 
   const handleOpenNew = () => {
     setSelectedUser(null)
@@ -262,6 +273,8 @@ export function UserDataTable<TData extends User, TValue>({
   }
 
   const canAddUsers = currentUser?.role === 'Super Admin';
+  const canApproveUsers = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
+
 
   return (
     <div className="space-y-4">
@@ -338,18 +351,7 @@ export function UserDataTable<TData extends User, TValue>({
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="flex items-center gap-2">
-            {canAddUsers && (
-                <>
-                    <Button onClick={handleOpenNew} className="md:hidden" size="icon">
-                        <PlusCircle className="h-4 w-4" />
-                        <span className="sr-only">Add User</span>
-                    </Button>
-                    <Button onClick={handleOpenNew} className="hidden md:flex">
-                        <PlusCircle className="mr-2 h-4 w-4" /> Add User
-                    </Button>
-                </>
-            )}
+      <div className="flex flex-col md:flex-row md:items-center gap-2">
             <Input
             placeholder="Filter by name or email..."
             value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
@@ -358,6 +360,28 @@ export function UserDataTable<TData extends User, TValue>({
             }
             className="w-full md:max-w-sm"
             />
+            <div className="flex items-center gap-2">
+                 {canApproveUsers && pendingUsersCount > 0 && (
+                    <Button variant={showPendingOnly ? "default" : "outline"} onClick={() => setShowPendingOnly(!showPendingOnly)}>
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Pending Approvals
+                        <span className="ml-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground text-xs font-bold">
+                            {pendingUsersCount}
+                        </span>
+                    </Button>
+                )}
+                 {canAddUsers && (
+                    <>
+                        <Button onClick={handleOpenNew} className="md:hidden" size="icon">
+                            <PlusCircle className="h-4 w-4" />
+                            <span className="sr-only">Add User</span>
+                        </Button>
+                        <Button onClick={handleOpenNew} className="hidden md:flex">
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add User
+                        </Button>
+                    </>
+                )}
+            </div>
       </div>
       <Card className="shadow-sm">
         <Table>
