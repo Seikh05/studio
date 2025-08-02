@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, Package, Users, ScrollText, LogOut } from "lucide-react";
+import { Package, Users, ScrollText, LogOut } from "lucide-react";
+import Image from "next/image";
 import {
   Sidebar,
   SidebarHeader,
@@ -31,8 +32,14 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="flex items-center gap-3">
-          <div className="bg-primary rounded-lg p-2 text-primary-foreground">
-            <Bot className="h-6 w-6" />
+          <div className="bg-primary rounded-lg p-1 text-primary-foreground">
+            <Image 
+              src="https://res.cloudinary.com/diqgquom2/image/upload/v1754114497/WhatsApp_Image_2024-11-13_at_23.44.12_1060fab9-removebg-preview_hzogwa.png"
+              alt="Club Icon"
+              width={32}
+              height={32}
+              className="h-8 w-8"
+            />
           </div>
           <span
             className={cn(
