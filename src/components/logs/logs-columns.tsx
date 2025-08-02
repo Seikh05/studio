@@ -89,7 +89,19 @@ export const logsColumns: ColumnDef<LogEntry>[] = [
     accessorKey: "details",
     header: "Details",
     cell: ({ row }) => {
-      return <span className="text-muted-foreground">{row.getValue("details")}</span>
+      const details = row.getValue("details") as string;
+      const notePrefix = " Note: ";
+      if (details.includes(notePrefix)) {
+        const parts = details.split(notePrefix);
+        return (
+          <span className="text-muted-foreground">
+            {parts[0]}
+            <span className="font-semibold text-foreground/90">{notePrefix}</span>
+            <span className="font-semibold text-foreground/90">{parts[1]}</span>
+          </span>
+        );
+      }
+      return <span className="text-muted-foreground">{details}</span>
     }
   },
   {
