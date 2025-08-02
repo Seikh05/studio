@@ -46,10 +46,11 @@ import { Label } from "../ui/label"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
-    openForm: (user: TData) => void
-    openDeleteDialog: (user: TData) => void,
-    approveUser: (user: TData) => void,
-    currentUser: User | null
+    openForm: (user: TData) => void;
+    openDeleteDialog: (user: TData) => void;
+    approveUser: (user: TData) => void;
+    openDenyDialog: (user: TData) => void;
+    currentUser: User | null;
   }
 }
 
@@ -79,9 +80,14 @@ export function UserDataTable<TData extends User, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [isFormOpen, setIsFormOpen] = React.useState(false)
   const [selectedUser, setSelectedUser] = React.useState<TData | null>(null)
+  
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
   const [userToDelete, setUserToDelete] = React.useState<TData | null>(null)
   const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
+
+  const [isDenyDialogOpen, setIsDenyDialogOpen] = React.useState(false);
+  const [userToDeny, setUserToDeny] = React.useState<TData | null>(null);
+  const [denyConfirmText, setDenyConfirmText] = React.useState("");
 
 
   const table = useReactTable({
@@ -106,6 +112,11 @@ export function UserDataTable<TData extends User, TValue>({
         setUserToDelete(user);
         setDeleteConfirmText("");
         setIsDeleteDialogOpen(true);
+      },
+      openDenyDialog: (user) => {
+        setUserToDeny(user);
+        setDenyConfirmText("");
+        setIsDenyDialogOpen(true);
       },
       approveUser: (user) => {
         handleApproveUser(user);
@@ -224,6 +235,31 @@ export function UserDataTable<TData extends User, TValue>({
         })
     }
   }
+  
+  const handleDenyUser = () => {
+    if (!userToDeny) return;
+    try {
+        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
+        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
+        const updatedUsers = existingUsers.filter(user => user.id !== userToDeny.id);
+        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
+        toast({
+            title: "User Denied",
+            description: `${userToDeny.name} has been denied and removed from the system.`,
+        });
+        onDataChange();
+        notifyUserUpdate();
+        setIsDenyDialogOpen(false);
+        setUserToDeny(null);
+    } catch(error) {
+         console.error("Failed to deny user:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to deny user."
+        })
+    }
+  }
 
   const canAddUsers = currentUser?.role === 'Super Admin';
 
@@ -236,6 +272,39 @@ export function UserDataTable<TData extends User, TValue>({
         onSave={handleSaveUser}
         currentUser={currentUser}
       />
+       <AlertDialog open={isDenyDialogOpen} onOpenChange={setIsDenyDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to deny this user?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the registration for 
+              <span className="font-semibold"> {userToDeny?.name}</span>. This action cannot be undone.
+              To confirm, type "deny" in the box below.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+           <div className="py-2">
+            <Label htmlFor="confirm-deny-input" className="sr-only">Confirm Deny</Label>
+            <Input 
+              id="confirm-deny-input"
+              value={denyConfirmText}
+              onChange={(e) => setDenyConfirmText(e.target.value)}
+              placeholder='Type "deny" to proceed'
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDenyUser} 
+              className="bg-destructive hover:bg-destructive/90"
+              disabled={denyConfirmText.toLowerCase() !== 'deny'}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Deny User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

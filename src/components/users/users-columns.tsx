@@ -3,7 +3,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
-import { MoreHorizontal, ArrowUpDown, CheckSquare } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, CheckSquare, Trash2 } from "lucide-react"
 import { format } from 'date-fns'
 import { useState, useEffect } from "react"
 
@@ -138,17 +138,25 @@ export const usersColumns: ColumnDef<User>[] = [
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               {canApprove && user.role === 'New User' && (
-                <DropdownMenuItem onClick={() => table.options.meta?.approveUser?.(user)}>
-                   <CheckSquare className="mr-2 h-4 w-4" />
-                   Approve User
-                </DropdownMenuItem>
+                <>
+                    <DropdownMenuItem onClick={() => table.options.meta?.approveUser?.(user)}>
+                       <CheckSquare className="mr-2 h-4 w-4" />
+                       Approve User
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                        onClick={() => table.options.meta?.openDenyDialog?.(user)}>
+                       <Trash2 className="mr-2 h-4 w-4" />
+                       Deny User
+                    </DropdownMenuItem>
+                </>
               )}
-               {canManageUsers && (
+               {canManageUsers && user.role !== 'New User' && (
                 <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(user)}>
                   Edit user
                 </DropdownMenuItem>
               )}
-              {canManageUsers && !isSelf && (
+              {canManageUsers && !isSelf && user.role !== 'New User' && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
