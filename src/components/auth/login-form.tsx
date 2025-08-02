@@ -43,8 +43,13 @@ export function LoginForm() {
     setIsLoading(true)
     // Simulate API call
     setTimeout(() => {
+      const allowedEmails = [
+        "admin@example.com", 
+        "superadmin@example.com",
+        "seikhsouvagyamustakim@gmail.com"
+      ];
       // Dummy credentials for demonstration
-      if ((values.email === "admin@example.com" || values.email === "superadmin@example.com") && values.password === "password") {
+      if (allowedEmails.includes(values.email) && values.password === "password") {
         router.push("/inventory")
       } else {
         toast({
