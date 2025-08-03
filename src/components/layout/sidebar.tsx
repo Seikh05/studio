@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -177,9 +176,11 @@ export function AppSidebar() {
                   <span className="flex-1">{item.label}</span>
                    {item.href === '/users' && pendingUsersCount > 0 && (
                      <div className={cn(
-                            "h-2 w-2 rounded-full bg-destructive transition-opacity duration-200",
+                            "absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center transition-opacity duration-200",
                             state === 'collapsed' && 'opacity-0'
-                        )} />
+                        )}>
+                        {item.notificationCount}
+                      </div>
                    )}
                 </Link>
               </SidebarMenuButton>

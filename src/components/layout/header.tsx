@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -21,7 +20,8 @@ const pathToTitle: { [key: string]: string } = {
   '/inventory': 'Inventory Management',
   '/users': 'User Management',
   '/logs': 'Inventory Log',
-  '/profile': 'My Profile'
+  '/profile': 'My Profile',
+  '/due-items': 'Due Items',
 };
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
@@ -48,7 +48,10 @@ const imageHost = {
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
-  const title = pathToTitle[pathname] || 'Dashboard';
+  
+  const basePath = `/${pathname.split('/')[1]}`;
+  const title = pathToTitle[basePath] || 'Dashboard';
+
   const [user, setUser] = React.useState<UserType | null>(null);
   const [avatarDisplayUrl, setAvatarDisplayUrl] = React.useState<string | undefined>('');
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
@@ -116,7 +119,10 @@ export function AppHeader() {
   };
   
   const handleRefresh = () => {
-    window.location.reload();
+    window.dispatchEvent(new Event('storage'));
+    window.dispatchEvent(new Event('inventory-updated'));
+    window.dispatchEvent(new Event('users-updated'));
+    window.dispatchEvent(new Event('logs-updated'));
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -128,7 +134,7 @@ export function AppHeader() {
     window.localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(updatedNotifications));
     
     // Navigate
-    router.push(`/inventory/${notification.itemId}`);
+    router.push(`/inventory/${notification.itemId}?transactionId=${notification.transactionId}`);
   };
 
   const handleMarkAllAsRead = () => {

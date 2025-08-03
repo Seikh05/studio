@@ -149,8 +149,8 @@ export type User = {
   lastLogin: string;
   avatarUrl: string;
   password?: string;
-  phone: string;
-  regdNum: string;
+  phone?: string;
+  regdNum?: string;
 };
 
 export type LogEntry = {
@@ -177,7 +177,8 @@ export type ItemTransaction = {
   isSettled?: boolean; // For borrow transactions: true if fully returned
   quantityReturned?: number; // For borrow transactions
   relatedBorrowId?: string; // For return transactions
-  itemName?: string;
+  itemName?: string; // Only used for display in global activity feeds
+  itemId?: string; // Only used for display in global activity feeds
 }
 
 export type Category = {

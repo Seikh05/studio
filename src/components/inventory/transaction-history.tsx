@@ -1,5 +1,4 @@
 
-
 'use client'
 
 import * as React from 'react'
@@ -15,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Avatar, AvatarFallback } from '../ui/avatar'
+import { useRouter } from 'next/navigation'
 
 
 interface TransactionHistoryProps {
@@ -25,6 +25,7 @@ interface TransactionHistoryProps {
 
 export function TransactionHistory({ transactions, onReturn, highlightedTransactionId }: TransactionHistoryProps) {
   const highlightedRef = React.useRef<HTMLLIElement>(null);
+  const router = useRouter();
 
   React.useEffect(() => {
     if (highlightedTransactionId && highlightedRef.current) {
@@ -71,7 +72,11 @@ export function TransactionHistory({ transactions, onReturn, highlightedTransact
           title += ` - ${transaction.borrowerPhone}`
         }
       }
-      return `${title} (approved ${byAdmin})`;
+      return (
+        <span className="cursor-pointer hover:underline" onClick={() => transaction.itemId && router.push(`/inventory/${transaction.itemId}`)}>
+            {transaction.itemName || 'Item'} borrowed by {transaction.borrowerName} (approved {byAdmin})
+        </span>
+      )
     }
     
     // Handle return transactions
@@ -87,11 +92,15 @@ export function TransactionHistory({ transactions, onReturn, highlightedTransact
       }
     }
     if (transaction.relatedBorrowId) {
-        title += ` (Ref: ${transaction.relatedBorrowId})`
+        title += ` (Ref: ${transaction.relatedBorrowId.substring(0,8)}...)`
     }
 
 
-    return `${title} (logged ${byAdmin})`;
+    return (
+        <span className="cursor-pointer hover:underline" onClick={() => transaction.itemId && router.push(`/inventory/${transaction.itemId}`)}>
+            {title} (logged {byAdmin})
+        </span>
+    );
   }
 
   const getInitials = (name: string) => {
