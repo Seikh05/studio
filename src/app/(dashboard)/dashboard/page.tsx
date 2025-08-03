@@ -1,98 +1,23 @@
+
 'use client'
 
 import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TransactionHistory } from '@/components/inventory/transaction-history';
-import type { ItemTransaction, InventoryItem } from '@/lib/types';
-import { LoaderCircle, Package, Users, ArrowRightLeft, Calendar as CalendarIcon, X } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { format, isSameDay, parseISO } from 'date-fns';
-
-
-const INVENTORY_STORAGE_KEY = 'inventory-data';
-const TRANSACTIONS_STORAGE_KEY_PREFIX = 'transactions-';
+import type { ItemTransaction } from '@/lib/types';
+import { Package, Users, ArrowRightLeft } from 'lucide-react';
 
 export default function DashboardPage() {
-  const [allTransactions, setAllTransactions] = React.useState<ItemTransaction[]>([]);
-  const [filteredTransactions, setFilteredTransactions] = React.useState<ItemTransaction[]>([]);
-  const [stats, setStats] = React.useState({ totalItems: 0, lowStock: 0, outOfStock: 0, totalUsers: 0 });
-  const [isClient, setIsClient] = React.useState(false);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
-  const [filteredTransactionCount, setFilteredTransactionCount] = React.useState(0);
+  // Static data for the dashboard
+  const stats = {
+    totalItems: 5,
+    lowStock: 1,
+    outOfStock: 1,
+    totalUsers: 4,
+    totalTransactions: 0,
+  };
 
-
-  React.useEffect(() => {
-    setIsClient(true);
-    if (typeof window !== 'undefined') {
-      try {
-        const transactions: ItemTransaction[] = [];
-        let totalItems = 0;
-        let lowStock = 0;
-        let outOfStock = 0;
-        
-        const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
-        if (inventoryData) {
-          const inventory: InventoryItem[] = JSON.parse(inventoryData);
-          totalItems = inventory.length;
-          inventory.forEach(item => {
-            if (item.status === 'Low Stock') lowStock++;
-            if (item.status === 'Out of Stock') outOfStock++;
-            
-            const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${item.id}`;
-            const transactionsData = window.localStorage.getItem(transactionsKey);
-            if (transactionsData) {
-              const itemTransactions: ItemTransaction[] = JSON.parse(transactionsData);
-              const transactionsWithItemName = itemTransactions.map(t => ({
-                ...t,
-                itemName: item.name
-              }));
-              transactions.push(...transactionsWithItemName);
-            }
-          });
-        }
-        
-        const usersData = window.localStorage.getItem('user-data');
-        const totalUsers = usersData ? JSON.parse(usersData).length : 0;
-
-        transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        
-        setAllTransactions(transactions);
-        setFilteredTransactions(transactions.slice(0,5)); // Initially show latest 5
-        setFilteredTransactionCount(transactions.length);
-        setStats({ 
-            totalItems, 
-            lowStock, 
-            outOfStock, 
-            totalUsers,
-        });
-
-      } catch (error) {
-        console.error('Failed to load dashboard data from localStorage', error);
-      }
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (!selectedDate) {
-      setFilteredTransactions(allTransactions.slice(0, 5));
-      setFilteredTransactionCount(allTransactions.length);
-    } else {
-      const filtered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
-      setFilteredTransactions(filtered);
-      setFilteredTransactionCount(filtered.length);
-    }
-  }, [selectedDate, allTransactions]);
-
-
-  if (!isClient) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const transactions: ItemTransaction[] = []; // No transactions in static mode
 
   return (
     <div className="space-y-6">
@@ -123,10 +48,8 @@ export default function DashboardPage() {
                     <ArrowRightLeft className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{filteredTransactionCount}</div>
-                    <p className="text-xs text-muted-foreground">
-                      {selectedDate ? `On ${format(selectedDate, 'PPP')}` : 'Borrows and returns logged'}
-                    </p>
+                    <div className="text-2xl font-bold">{stats.totalTransactions}</div>
+                    <p className="text-xs text-muted-foreground">Borrows and returns logged</p>
                 </CardContent>
             </Card>
              <Card>
@@ -141,43 +64,16 @@ export default function DashboardPage() {
             </Card>
        </div>
       <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <CardHeader>
             <div>
               <CardTitle>Activity Log</CardTitle>
               <CardDescription>
-                {selectedDate ? `Transactions for ${format(selectedDate, 'PPP')}` : 'Most recent inventory transactions.'}
+                Most recent inventory transactions. (Disabled in static mode)
               </CardDescription>
-            </div>
-            <div className="mt-4 sm:mt-0 flex items-center gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className="w-full sm:w-56 justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {selectedDate ? format(selectedDate, "PPP") : <span>Filter by date...</span>}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-                {selectedDate && (
-                  <Button variant="ghost" size="icon" onClick={() => setSelectedDate(undefined)}>
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Reset</span>
-                  </Button>
-                )}
             </div>
         </CardHeader>
         <CardContent>
-          <TransactionHistory transactions={filteredTransactions} />
+          <TransactionHistory transactions={transactions} />
         </CardContent>
       </Card>
     </div>

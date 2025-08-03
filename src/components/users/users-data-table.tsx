@@ -34,20 +34,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { User } from "@/lib/types"
-import { UserForm } from "./user-form"
-import { Card } from "../ui/card"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
-import { Label } from "../ui/label"
+import { Card } from "../ui/card"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 
@@ -69,13 +57,6 @@ interface DataTableProps<TData, TValue> {
   currentUser: User | null;
 }
 
-const STORAGE_KEY = 'user-data';
-const LOGGED_IN_USER_KEY = 'logged-in-user';
-
-const notifyUserUpdate = () => {
-    window.dispatchEvent(new Event('users-updated'));
-};
-
 export function UserDataTable<TData extends User, TValue>({
   columns,
   data,
@@ -88,16 +69,6 @@ export function UserDataTable<TData extends User, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [selectedUser, setSelectedUser] = React.useState<TData | null>(null)
-  
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
-  const [userToDelete, setUserToDelete] = React.useState<TData | null>(null)
-  const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
-
-  const [isDenyDialogOpen, setIsDenyDialogOpen] = React.useState(false);
-  const [userToDeny, setUserToDeny] = React.useState<TData | null>(null);
-  const [denyConfirmText, setDenyConfirmText] = React.useState("");
   const [showPendingOnly, setShowPendingOnly] = React.useState(false);
 
   const pendingUsersCount = React.useMemo(() => data.filter(user => user.role === 'New User').length, [data]);
@@ -112,7 +83,6 @@ export function UserDataTable<TData extends User, TValue>({
       setColumnVisibility({})
     }
   }, [isMobile])
-
 
   const table = useReactTable({
     data,
@@ -130,23 +100,10 @@ export function UserDataTable<TData extends User, TValue>({
       columnVisibility,
     },
     meta: {
-      openForm: (user) => {
-        setSelectedUser(user);
-        setIsFormOpen(true);
-      },
-      openDeleteDialog: (user) => {
-        setUserToDelete(user);
-        setDeleteConfirmText("");
-        setIsDeleteDialogOpen(true);
-      },
-      openDenyDialog: (user) => {
-        setUserToDeny(user);
-        setDenyConfirmText("");
-        setIsDenyDialogOpen(true);
-      },
-      approveUser: (user) => {
-        handleApproveUser(user);
-      },
+      openForm: () => toast({title: "Static Mode", description: "User management is disabled."}),
+      openDeleteDialog: () => toast({title: "Static Mode", description: "User management is disabled."}),
+      openDenyDialog: () => toast({title: "Static Mode", description: "User management is disabled."}),
+      approveUser: () => toast({title: "Static Mode", description: "User management is disabled."}),
       currentUser,
     }
   })
@@ -160,141 +117,7 @@ export function UserDataTable<TData extends User, TValue>({
   }, [showPendingOnly, table]);
 
   const handleOpenNew = () => {
-    setSelectedUser(null)
-    setIsFormOpen(true)
-  }
-
-  const handleApproveUser = (userToApprove: User) => {
-    try {
-        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
-        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
-
-        const updatedUsers = existingUsers.map((user) => 
-            user.id === userToApprove.id ? { ...user, role: 'General Member' } : user
-        );
-        
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-        toast({
-            title: "User Approved",
-            description: `${userToApprove.name} has been approved as a General Member.`,
-        });
-        onDataChange();
-        notifyUserUpdate(); // Notify sidebar to update dot
-        setShowPendingOnly(false); // Reset the filter
-    } catch(error) {
-        console.error("Failed to approve user:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to approve user."
-        })
-    }
-  }
-
-  const handleSaveUser = (formData: Omit<User, 'id' | 'lastLogin' | 'status' | 'avatarUrl'>) => {
-    try {
-        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
-        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
-
-        if (selectedUser) {
-            const updatedUser = {
-                ...selectedUser,
-                ...formData,
-                lastLogin: new Date().toISOString(),
-            };
-            const updatedUsers = existingUsers.map((user) => (user.id === selectedUser.id ? updatedUser : user));
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-            toast({
-                title: "User Updated",
-                description: `${formData.name} has been successfully updated.`,
-            });
-        } else {
-            const newUser: User = {
-                id: `USR-${Math.floor(Math.random() * 9000) + 1000}`,
-                ...formData,
-                status: 'Active',
-                lastLogin: new Date().toISOString(),
-                avatarUrl: `https://placehold.co/40x40.png`,
-            };
-            const updatedUsers = [...existingUsers, newUser];
-            window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-            toast({
-                title: "User Added",
-                description: `${formData.name} has been successfully created.`,
-            });
-        }
-        onDataChange();
-        notifyUserUpdate(); // Notify sidebar to update dot
-        setIsFormOpen(false);
-        setSelectedUser(null);
-    } catch(error) {
-        console.error("Failed to save user:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to save user data."
-        })
-    }
-  }
-
-  const handleDelete = () => {
-    if (!userToDelete) return;
-    if (currentUser?.role !== 'Super Admin') {
-        toast({
-            variant: "destructive",
-            title: "Permission Denied",
-            description: "You do not have permission to remove users."
-        });
-        return;
-    }
-
-     try {
-        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
-        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
-        const updatedUsers = existingUsers.filter(user => user.id !== userToDelete.id);
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-        toast({
-            title: "User Removed",
-            description: `${userToDelete.name} has been removed.`,
-        });
-        onDataChange(); // Trigger data refresh in parent
-        notifyUserUpdate(); // Notify sidebar to update dot
-        setIsDeleteDialogOpen(false);
-        setUserToDelete(null);
-    } catch(error) {
-         console.error("Failed to delete user:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to delete user."
-        })
-    }
-  }
-  
-  const handleDenyUser = () => {
-    if (!userToDeny) return;
-    try {
-        const existingUsersRaw = window.localStorage.getItem(STORAGE_KEY);
-        const existingUsers: User[] = existingUsersRaw ? JSON.parse(existingUsersRaw) : [];
-        const updatedUsers = existingUsers.filter(user => user.id !== userToDeny.id);
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedUsers));
-        toast({
-            title: "User Denied",
-            description: `${userToDeny.name} has been denied and removed from the system.`,
-        });
-        onDataChange();
-        notifyUserUpdate();
-        setShowPendingOnly(false); // Reset the filter
-        setIsDenyDialogOpen(false);
-        setUserToDeny(null);
-    } catch(error) {
-         console.error("Failed to deny user:", error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to deny user."
-        })
-    }
+    toast({title: "Static Mode", description: "Adding users is disabled."})
   }
 
   const canAddUsers = currentUser?.role === 'Super Admin';
@@ -303,79 +126,6 @@ export function UserDataTable<TData extends User, TValue>({
 
   return (
     <div className="space-y-4">
-      <UserForm
-        isOpen={isFormOpen}
-        onOpenChange={setIsFormOpen}
-        user={selectedUser}
-        onSave={handleSaveUser}
-        currentUser={currentUser}
-      />
-       <AlertDialog open={isDenyDialogOpen} onOpenChange={setIsDenyDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to deny this user?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently remove the registration for 
-              <span className="font-semibold"> {userToDeny?.name}</span>. This action cannot be undone.
-              To confirm, type "deny" in the box below.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-           <div className="py-2">
-            <Label htmlFor="confirm-deny-input" className="sr-only">Confirm Deny</Label>
-            <Input 
-              id="confirm-deny-input"
-              value={denyConfirmText}
-              onChange={(e) => setDenyConfirmText(e.target.value)}
-              placeholder='Type "deny" to proceed'
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDenyUser} 
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={denyConfirmText.toLowerCase() !== 'deny'}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Deny User
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to remove this user?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the user
-               <span className="font-semibold"> {userToDelete?.name}</span>.
-               To confirm, please type "confirm" in the box below.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-           <div className="py-2">
-            <Label htmlFor="confirm-delete-input" className="sr-only">Confirm Delete</Label>
-            <Input 
-              id="confirm-delete-input"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder='Type "confirm" to proceed'
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteConfirmText.toLowerCase() !== 'confirm'}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Remove
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <Input
             placeholder="Filter by name or email..."

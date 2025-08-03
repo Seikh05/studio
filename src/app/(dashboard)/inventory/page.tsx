@@ -1,17 +1,11 @@
-import type { InventoryItem } from '@/lib/types';
+
 import { InventoryDataTable } from '@/components/inventory/inventory-data-table';
 import { inventoryColumns } from '@/components/inventory/inventory-columns';
 import { initialInventory } from '@/lib/types';
 
-
-async function getInventoryData(): Promise<InventoryItem[]> {
-  // In a real app, you'd fetch this from a database like Firestore.
-  // For now, we'll use the hardcoded initial data.
-  // This function is async to simulate a real data fetch.
-  return Promise.resolve(initialInventory);
-}
-
+// This is now a Server Component. It fetches data on the server.
 export default async function InventoryPage() {
-  const data = await getInventoryData();
+  // Data is now sourced directly from the hardcoded list.
+  const data = initialInventory;
   return <InventoryDataTable columns={inventoryColumns} data={data} />;
 }

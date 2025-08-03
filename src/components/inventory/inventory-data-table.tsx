@@ -34,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ItemForm } from "./item-form"
-import type { InventoryItem, LogEntry, User, Category } from "@/lib/types"
+import type { InventoryItem, User, Category } from "@/lib/types"
 import { Card } from "@/components/ui/card"
 import {
   AlertDialog,
@@ -50,7 +50,7 @@ import { useToast } from "@/hooks/use-toast"
 import { CategoryManager } from "./category-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Label } from "../ui/label"
-import { initialInventory, initialUsers } from "@/lib/types"
+import { initialUsers } from "@/lib/types"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
@@ -65,12 +65,6 @@ interface DataTableProps<TData, TValue> {
   data: TData[]
 }
 
-const INVENTORY_STORAGE_KEY = 'inventory-data';
-const LOGS_STORAGE_KEY = 'logs-data';
-const LOGGED_IN_USER_KEY = 'logged-in-user';
-const CATEGORIES_STORAGE_KEY = 'inventory-categories';
-const MAX_LOG_ENTRIES = 50;
-
 const defaultCategories: Category[] = [
     { id: 'cat-1', name: 'Gadgets' },
     { id: 'cat-2', name: 'Robotics' },
@@ -78,45 +72,6 @@ const defaultCategories: Category[] = [
     { id: 'cat-4', name: 'Power Sources' },
     { id: 'cat-5', name: 'Other' },
 ];
-
-const notifyLogUpdate = () => {
-  window.dispatchEvent(new Event('logs-updated'));
-};
-
-const addLogEntry = (action: string, details: string) => {
-  try {
-    let adminName = 'Admin User';
-
-    const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-    if (storedUser) {
-      const user: User = JSON.parse(storedUser);
-      adminName = user.name;
-    }
-
-    const newLog: LogEntry = {
-      id: `LOG-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      adminName,
-      action,
-      details,
-    };
-
-    const existingLogsRaw = window.localStorage.getItem(LOGS_STORAGE_KEY);
-    const existingLogs: LogEntry[] = existingLogsRaw ? JSON.parse(existingLogsRaw) : [];
-    
-    const updatedLogs = [newLog, ...existingLogs].slice(0, MAX_LOG_ENTRIES);
-    
-    try {
-        window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(updatedLogs));
-    } catch (error) {
-        console.error("Failed to set log data in localStorage (quota may be exceeded):", error);
-    }
-    
-    notifyLogUpdate();
-  } catch (error) {
-    console.error("Failed to create log entry:", error);
-  }
-};
 
 export function InventoryDataTable<TData extends InventoryItem, TValue>({
   columns,
@@ -126,84 +81,14 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   const isMobile = useIsMobile();
   
   const [data, setData] = React.useState<TData[]>(initialData);
-  const [isClient, setIsClient] = React.useState(false)
   const [currentUser, setCurrentUser] = React.useState<User | null>(null);
   const [categories, setCategories] = React.useState<Category[]>(defaultCategories);
   const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
 
   React.useEffect(() => {
-    setIsClient(true)
-  }, [])
-  
-  React.useEffect(() => {
-    if (isClient) {
-      try {
-        // Load current user
-        const storedUser = window.localStorage.getItem(LOGGED_IN_USER_KEY);
-        if (storedUser) {
-          setCurrentUser(JSON.parse(storedUser));
-        }
-
-        // Load inventory, falling back to props if none in storage
-        const storedData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
-        if (storedData) {
-          setData(JSON.parse(storedData));
-        } else {
-           window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialData));
-           setData(initialData);
-        }
-        // Load categories
-        const storedCategories = window.localStorage.getItem(CATEGORIES_STORAGE_KEY);
-        if (storedCategories) {
-            setCategories(JSON.parse(storedCategories));
-        } else {
-            window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(defaultCategories));
-        }
-      } catch (error) {
-        console.error("Failed to access localStorage", error);
-        setData(initialData)
-      }
-    }
-  }, [isClient, initialData]);
-
-  React.useEffect(() => {
-    if (isClient) {
-        try {
-            window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(data));
-        } catch (error) {
-            console.error("Failed to save to localStorage", error);
-        }
-    }
-  }, [data, isClient]);
-
-  const handleSaveCategories = (updatedCategories: Category[]) => {
-    setCategories(updatedCategories);
-    if(isClient) {
-        try {
-            window.localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(updatedCategories));
-            toast({ title: "Categories Updated", description: "Your category list has been saved." });
-        } catch (error) {
-            console.error("Failed to save categories to localStorage", error);
-            toast({ variant: "destructive", title: "Save Failed", description: "Could not save category list." });
-        }
-    }
-    // Potentially update items if a category was renamed or deleted
-    const oldCategoryNames = categories.map(c => c.name);
-    const updatedCategoryNames = updatedCategories.map(c => c.name);
-    
-    // Simple check: if a category was removed, update items using it to "Other"
-    const removedCategories = oldCategoryNames.filter(name => !updatedCategoryNames.includes(name));
-    if (removedCategories.length > 0) {
-        const defaultCategory = updatedCategories.find(c => c.name === 'Other')?.name || updatedCategories[0]?.name || '';
-        setData(prevData => prevData.map(item => {
-            if (removedCategories.includes(item.category)) {
-                return { ...item, category: defaultCategory };
-            }
-            return item;
-        }));
-    }
-  };
-
+    // Set a default user since we are not logging in anymore
+    setCurrentUser(initialUsers[0]);
+  }, []);
 
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
@@ -226,8 +111,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   }, [isMobile])
 
   const openForm = (item: TData | null) => {
-    setSelectedItem(item);
-    setIsFormOpen(true);
+    toast({ title: "Static Mode", description: "Adding or editing items is disabled in static mode."})
+  }
+
+  const openDeleteDialog = () => {
+     toast({ title: "Static Mode", description: "Deleting items is disabled in static mode."})
   }
 
   const table = useReactTable({
@@ -246,92 +134,14 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       columnVisibility,
     },
     meta: {
-      openForm: (item) => openForm(item),
-      openDeleteDialog: (item) => {
-        setItemToDelete(item);
-        setDeleteConfirmText("");
-        setIsDeleteDialogOpen(true);
-      },
+      openForm,
+      openDeleteDialog,
       currentUser,
     }
   })
 
   const handleOpenNew = () => {
-    setSelectedItem(null)
-    setIsFormOpen(true)
-  }
-  
-  const handleSaveItem = (formData: Omit<InventoryItem, 'id' | 'lastUpdated' | 'status'> & { stockUpdateNote?: string }) => {
-    if (selectedItem) {
-      const oldStock = selectedItem.stock;
-      const newStock = Number(formData.stock);
-      const stockChange = newStock - oldStock;
-
-      const updatedItem = {
-        ...selectedItem,
-        ...formData,
-        stock: newStock,
-        lastUpdated: new Date().toISOString(),
-        status: newStock > 0 ? (newStock < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
-      }
-      setData(data.map((item) => (item.id === selectedItem.id ? updatedItem : item) as TData));
-      toast({
-        title: "Item Updated",
-        description: `${formData.name} has been successfully updated.`,
-      })
-
-      if (stockChange !== 0) {
-          const action = stockChange > 0 ? 'Stock Increased' : 'Stock Decreased';
-          let details = `${action} for "${formData.name}". New stock: ${newStock} (${stockChange > 0 ? '+' : ''}${stockChange}).`;
-          if (formData.stockUpdateNote) {
-            details += ` Note: ${formData.stockUpdateNote}`;
-          }
-          addLogEntry(action, details);
-      } else {
-        addLogEntry('Item Details Updated', `Updated details for "${formData.name}".`);
-      }
-
-    } else {
-      const newItem: InventoryItem = {
-        id: `ITEM-${Math.floor(Math.random() * 9000) + 1000}`,
-        ...formData,
-        stock: Number(formData.stock),
-        status: Number(formData.stock) > 0 ? (Number(formData.stock) < 20 ? 'Low Stock' : 'In Stock') : 'Out of Stock',
-        lastUpdated: new Date().toISOString(),
-      }
-      setData([...data, newItem as TData]);
-      toast({
-        title: "Item Added",
-        description: `${formData.name} has been successfully created.`,
-      })
-      let logDetails = `Added new item "${newItem.name}" with initial stock of ${newItem.stock}.`;
-      if (formData.stockUpdateNote) {
-        logDetails += ` Note: ${formData.stockUpdateNote}`;
-      }
-      addLogEntry('Item Added', logDetails);
-    }
-    setIsFormOpen(false);
-    setSelectedItem(null);
-  }
-
-  const handleDelete = () => {
-    if (!itemToDelete) return;
-    setData(data.filter(item => item.id !== itemToDelete.id));
-    toast({
-      title: "Item Deleted",
-      description: `${itemToDelete.name} has been removed from the inventory.`,
-    });
-    addLogEntry('Item Deleted', `Deleted item "${itemToDelete.name}".`);
-    setIsDeleteDialogOpen(false);
-    setItemToDelete(null);
-  }
-
-  if (!isClient) {
-    return (
-        <div className="flex items-center justify-center h-full">
-            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
+    openForm(null);
   }
 
   const canManageInventory = currentUser && currentUser.role !== 'General Member';
@@ -339,54 +149,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
 
   return (
     <div className="space-y-4">
-       <ItemForm 
-        isOpen={isFormOpen} 
-        onOpenChange={setIsFormOpen} 
-        item={selectedItem}
-        onSave={handleSaveItem}
-        categories={categories}
-        inventory={data}
-        openEditForm={openForm}
-      />
-      <CategoryManager 
-        isOpen={isCategoryManagerOpen}
-        onOpenChange={setIsCategoryManagerOpen}
-        categories={categories}
-        onSave={handleSaveCategories}
-      />
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this item?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the item
-              <span className="font-semibold"> {itemToDelete?.name}</span> from your inventory.
-               To confirm, please type "delete" in the box below.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-           <div className="py-2">
-            <Label htmlFor="confirm-delete-input" className="sr-only">Confirm Delete</Label>
-            <Input 
-              id="confirm-delete-input"
-              value={deleteConfirmText}
-              onChange={(e) => setDeleteConfirmText(e.target.value)}
-              placeholder='Type "delete" to proceed'
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete} 
-              className="bg-destructive hover:bg-destructive/90"
-              disabled={deleteConfirmText.toLowerCase() !== 'delete'}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <Input
           placeholder="Filter by name..."
@@ -406,11 +168,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button variant="outline" className="hidden md:flex" onClick={() => setIsCategoryManagerOpen(true)}>
+                <Button variant="outline" className="hidden md:flex" onClick={() => toast({title: "Static Mode", description: "Category management is disabled."})}>
                     <ListTree className="mr-2 h-4 w-4" />
                     Edit Categories
                 </Button>
-                <Button variant="outline" size="icon" className="md:hidden" onClick={() => setIsCategoryManagerOpen(true)}>
+                <Button variant="outline" size="icon" className="md:hidden" onClick={() => toast({title: "Static Mode", description: "Category management is disabled."})}>
                     <ListTree className="h-4 w-4" />
                     <span className="sr-only">Edit Categories</span>
                 </Button>
@@ -515,3 +277,4 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     </div>
   )
 }
+
