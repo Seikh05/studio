@@ -24,22 +24,24 @@ interface TransactionHistoryProps {
 }
 
 export function TransactionHistory({ transactions, onReturn, highlightedTransactionId }: TransactionHistoryProps) {
-  const highlightedRef = React.useRef<HTMLLIElement>(null);
+  const itemRefs = React.useRef<Map<string, HTMLLIElement | null>>(new Map());
   const router = useRouter();
 
   React.useEffect(() => {
-    if (highlightedTransactionId && highlightedRef.current) {
-        highlightedRef.current.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
+    if (highlightedTransactionId) {
+      const node = itemRefs.current.get(highlightedTransactionId);
+      if (node) {
+        node.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
-        // Add a temporary highlight class
-        highlightedRef.current.classList.add('bg-primary/10', 'ring-2', 'ring-primary/50');
+        node.classList.add('bg-primary/10', 'ring-2', 'ring-primary/50');
         setTimeout(() => {
-            highlightedRef.current?.classList.remove('bg-primary/10', 'ring-2', 'ring-primary/50');
+          node.classList.remove('bg-primary/10', 'ring-2', 'ring-primary/50');
         }, 3000); // Highlight for 3 seconds
+      }
     }
-  }, [highlightedTransactionId]);
+  }, [highlightedTransactionId, transactions]);
 
 
   if (transactions.length === 0) {
@@ -109,7 +111,13 @@ export function TransactionHistory({ transactions, onReturn, highlightedTransact
           {transactions.map((transaction, transactionIdx) => (
             <li 
                 key={transaction.id} 
-                ref={transaction.id === highlightedTransactionId ? highlightedRef : null}
+                ref={node => {
+                    if (node) {
+                      itemRefs.current.set(transaction.id, node);
+                    } else {
+                      itemRefs.current.delete(transaction.id);
+                    }
+                }}
                 className="rounded-lg transition-colors duration-1000 -m-2 p-2"
             >
               <div className="relative pb-8">
