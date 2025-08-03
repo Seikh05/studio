@@ -20,7 +20,7 @@ import type { InventoryItem, User } from "@/lib/types"
 const ActionsCell = ({ row, table }: { row: any, table: any }) => {
   const item = row.original as InventoryItem;
   const router = useRouter();
-  const { currentUser, openForm, openDeleteDialog } = table.options.meta || {};
+  const { currentUser, onOpenForm, onOpenDeleteDialog } = table.options.meta || {};
 
   const canManage = currentUser?.role !== 'General Member';
 
@@ -41,14 +41,14 @@ const ActionsCell = ({ row, table }: { row: any, table: any }) => {
             <Eye className="mr-2 h-4 w-4" />
             View Log
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openForm?.(item)}>
+          <DropdownMenuItem onClick={() => onOpenForm?.(item)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit Item
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem 
             className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            onClick={() => openDeleteDialog?.(item)}>
+            onClick={() => onOpenDeleteDialog?.(item)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete Item
           </DropdownMenuItem>

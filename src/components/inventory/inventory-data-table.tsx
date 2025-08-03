@@ -95,8 +95,8 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       columnVisibility,
     },
     meta: {
-      onOpenForm,
-      onOpenDeleteDialog,
+      onOpenForm: onOpenForm,
+      onOpenDeleteDialog: onOpenDeleteDialog,
       currentUser,
     }
   })
