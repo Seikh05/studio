@@ -27,12 +27,30 @@ const pathToTitle: { [key: string]: string } = {
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const ALL_USERS_KEY = 'user-data';
 const NOTIFICATIONS_STORAGE_KEY = 'notifications-data';
+const HOSTED_IMAGE_STORAGE_KEY = 'hosted-images';
+
+
+const imageHost = {
+  get: (imageId: string): string => {
+    if (!imageId || !imageId.startsWith('hosted-img-')) return imageId;
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      return hostedImages[imageId] || '';
+    } catch (error) {
+      console.error("Failed to get image from virtual host", error);
+      return '';
+    }
+  }
+};
+
 
 export function AppHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const title = pathToTitle[pathname] || 'Dashboard';
   const [user, setUser] = React.useState<UserType | null>(null);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = React.useState<string | undefined>('');
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -78,6 +96,15 @@ export function AppHeader() {
       window.removeEventListener('storage', handleStorageChange);
     }
   }, [handleStorageChange]);
+  
+  React.useEffect(() => {
+    if (user?.avatarUrl) {
+      setAvatarDisplayUrl(imageHost.get(user.avatarUrl));
+    } else {
+      setAvatarDisplayUrl('');
+    }
+  }, [user]);
+
 
   const handleLogout = () => {
     try {
@@ -201,7 +228,7 @@ export function AppHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Avatar className="h-9 w-9">
-                <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
+                <AvatarImage src={avatarDisplayUrl} alt={user?.name || ''} data-ai-hint="person avatar" />
                 <AvatarFallback>{user ? getInitials(user.name) : 'AU'}</AvatarFallback>
               </Avatar>
             </Button>

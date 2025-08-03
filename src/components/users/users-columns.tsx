@@ -18,6 +18,55 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import type { User } from "@/lib/types"
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar"
+
+
+const HOSTED_IMAGE_STORAGE_KEY = 'hosted-images';
+
+const imageHost = {
+  get: (imageId: string): string => {
+    if (!imageId || !imageId.startsWith('hosted-img-')) return imageId;
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      return hostedImages[imageId] || '';
+    } catch (error) {
+      console.error("Failed to get image from virtual host", error);
+      return '';
+    }
+  }
+};
+
+const UserCell = ({ row }: { row: any }) => {
+    const user = row.original as User;
+    const [avatarDisplayUrl, setAvatarDisplayUrl] = useState('');
+
+    useEffect(() => {
+        if (user.avatarUrl) {
+            setAvatarDisplayUrl(imageHost.get(user.avatarUrl));
+        } else {
+            setAvatarDisplayUrl('');
+        }
+    }, [user.avatarUrl]);
+
+    const getInitials = (name: string) => {
+        return name.split(' ').map((n) => n[0]).join('').toUpperCase();
+    };
+
+    return (
+        <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+                <AvatarImage src={avatarDisplayUrl} alt={user.name} data-ai-hint="person avatar" />
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+                <span className="font-medium">{user.name}</span>
+                <span className="text-sm text-muted-foreground">{user.email}</span>
+            </div>
+        </div>
+    );
+};
+
 
 const LastLoginCell = ({ row }: { row: any }) => {
   const lastLogin = row.getValue("lastLogin") as string;
@@ -53,25 +102,7 @@ export const usersColumns: ColumnDef<User>[] = [
         </Button>
       )
     },
-    cell: ({ row }) => {
-      const user = row.original
-      return (
-        <div className="flex items-center gap-3">
-          <Image
-            src={user.avatarUrl}
-            alt={user.name}
-            width={40}
-            height={40}
-            className="rounded-full object-cover"
-            data-ai-hint="person avatar"
-          />
-          <div className="flex flex-col">
-            <span className="font-medium">{user.name}</span>
-            <span className="text-sm text-muted-foreground">{user.email}</span>
-          </div>
-        </div>
-      )
-    },
+    cell: UserCell,
   },
   {
     accessorKey: "status",

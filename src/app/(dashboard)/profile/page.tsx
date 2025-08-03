@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const USER_STORAGE_KEY = 'user-data';
+const HOSTED_IMAGE_STORAGE_KEY = 'hosted-images';
 const PLACEHOLDER_AVATAR = 'https://placehold.co/40x40.png';
 
 
@@ -32,6 +33,36 @@ const profileSchema = z.object({
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
+// Helper to simulate image hosting
+const imageHost = {
+  save: (dataUrl: string): string => {
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      const imageId = `hosted-img-${Date.now()}`;
+      hostedImages[imageId] = dataUrl;
+      // To prevent quota issues with the image host itself, we can prune old images
+      // For now, we'll just overwrite, but a real solution would be more complex.
+      window.localStorage.setItem(HOSTED_IMAGE_STORAGE_KEY, JSON.stringify(hostedImages));
+      return imageId;
+    } catch (error) {
+      console.error("Failed to save image to virtual host", error);
+      return PLACEHOLDER_AVATAR; // Fallback
+    }
+  },
+  get: (imageId: string): string => {
+    if (!imageId || !imageId.startsWith('hosted-img-')) return imageId;
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      return hostedImages[imageId] || PLACEHOLDER_AVATAR;
+    } catch (error) {
+      console.error("Failed to get image from virtual host", error);
+      return PLACEHOLDER_AVATAR;
+    }
+  }
+};
+
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -40,6 +71,8 @@ export default function ProfilePage() {
   const [isClient, setIsClient] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = React.useState<string | undefined>(PLACEHOLDER_AVATAR);
+
 
   const {
     control,
@@ -79,15 +112,34 @@ export default function ProfilePage() {
     }
   }, [reset]);
 
-  const avatarPreview = watch('avatarUrl');
+  const formAvatarUrl = watch('avatarUrl');
+
+  React.useEffect(() => {
+    if (formAvatarUrl) {
+      setAvatarDisplayUrl(imageHost.get(formAvatarUrl));
+    } else {
+      setAvatarDisplayUrl(PLACEHOLDER_AVATAR);
+    }
+  }, [formAvatarUrl]);
+
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
+       // Check file size (e.g., limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          variant: 'destructive',
+          title: 'Image Too Large',
+          description: 'Please select an image smaller than 2MB.',
+        });
+        return;
+      }
       const reader = new FileReader();
       setIsUploading(true);
       reader.onloadend = () => {
-        setValue('avatarUrl', reader.result as string, { shouldValidate: true, shouldDirty: true });
+        const hostedImageId = imageHost.save(reader.result as string);
+        setValue('avatarUrl', hostedImageId, { shouldValidate: true, shouldDirty: true });
         setIsUploading(false);
          toast({
             title: 'Image Ready',
@@ -125,10 +177,8 @@ export default function ProfilePage() {
     try {
       const updatedUser = { ...user, ...data, avatarUrl: data.avatarUrl || PLACEHOLDER_AVATAR };
       
-      // Update the logged-in user session
       window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
 
-      // Update the master user list
       const allUsersRaw = window.localStorage.getItem(USER_STORAGE_KEY);
       if (allUsersRaw) {
         let allUsers: User[] = JSON.parse(allUsersRaw);
@@ -142,15 +192,18 @@ export default function ProfilePage() {
         description: 'Your changes have been saved successfully.',
       });
 
-      // Force a re-render in other components listening to this key
       window.dispatchEvent(new Event('storage'));
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save profile", error);
+      let description = "There was an error saving your profile.";
+      if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+          description = "Could not save changes because the browser storage is full. This can happen if the new avatar is too large."
+      }
       toast({
         variant: "destructive",
         title: "Save Failed",
-        description: "There was an error saving your profile.",
+        description: description,
       })
     } finally {
       setIsSaving(false);
@@ -165,7 +218,7 @@ export default function ProfilePage() {
     );
   }
 
-  const showRemoveButton = avatarPreview && avatarPreview !== PLACEHOLDER_AVATAR;
+  const showRemoveButton = formAvatarUrl && formAvatarUrl !== PLACEHOLDER_AVATAR;
 
   return (
     <Card className="max-w-2xl mx-auto">
@@ -181,7 +234,7 @@ export default function ProfilePage() {
                 <Label>Profile Picture</Label>
                 <div className="flex items-center gap-4">
                   <Avatar className="h-20 w-20">
-                    <AvatarImage src={avatarPreview} alt={user.name} data-ai-hint="person avatar"/>
+                    <AvatarImage src={avatarDisplayUrl} alt={user.name} data-ai-hint="person avatar"/>
                     <AvatarFallback className="text-2xl">{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-1 flex-col gap-2">

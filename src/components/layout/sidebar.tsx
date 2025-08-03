@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -24,12 +25,29 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 const ALL_USERS_KEY = 'user-data';
+const HOSTED_IMAGE_STORAGE_KEY = 'hosted-images';
+
+const imageHost = {
+  get: (imageId: string): string => {
+    if (!imageId || !imageId.startsWith('hosted-img-')) return imageId;
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      return hostedImages[imageId] || '';
+    } catch (error) {
+      console.error("Failed to get image from virtual host", error);
+      return '';
+    }
+  }
+};
+
 
 export function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { state, isMobile, setOpenMobile } = useSidebar();
   const [user, setUser] = React.useState<UserType | null>(null);
+  const [avatarDisplayUrl, setAvatarDisplayUrl] = React.useState<string | undefined>('');
   const [pendingUsersCount, setPendingUsersCount] = React.useState(0);
 
 
@@ -71,6 +89,14 @@ export function AppSidebar() {
       window.removeEventListener('users-updated', handleStorageChange);
     }
   }, [handleStorageChange]);
+
+  React.useEffect(() => {
+    if (user?.avatarUrl) {
+      setAvatarDisplayUrl(imageHost.get(user.avatarUrl));
+    } else {
+      setAvatarDisplayUrl('');
+    }
+  }, [user]);
 
   const handleLogout = () => {
     try {
@@ -170,7 +196,7 @@ export function AppSidebar() {
         )}
         <div className={cn('flex items-center gap-3 w-full', state === 'collapsed' && 'justify-center')}>
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.avatarUrl} alt={user?.name || ''} data-ai-hint="person avatar"/>
+            <AvatarImage src={avatarDisplayUrl} alt={user?.name || ''} data-ai-hint="person avatar"/>
             <AvatarFallback>{user ? getInitials(user.name) : 'AU'}</AvatarFallback>
           </Avatar>
           <div className={cn('flex flex-col grow min-w-0', state === 'collapsed' && 'hidden')}>
