@@ -29,30 +29,83 @@ const formSchema = z.object({
 const USER_STORAGE_KEY = 'user-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
 
+// This is a simplified copy of the initialUsers from the users page.
+// In a real app, this would come from a central source.
+const initialUsers: User[] = [
+    {
+      id: 'USR-001',
+      name: 'Alice Johnson',
+      email: 'superadmin@example.com',
+      role: 'Super Admin',
+      status: 'Active',
+      lastLogin: '2024-07-28T10:00:00Z',
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '9876543210',
+      regdNum: '21050001',
+    },
+    {
+      id: 'USR-002',
+      name: 'Bob Williams',
+      email: 'admin@example.com',
+      role: 'Admin',
+      status: 'Active',
+      lastLogin: '2024-07-27T15:30:00Z',
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '9876543211',
+      regdNum: '21050002',
+    },
+    {
+      id: 'USR-003',
+      name: 'Charlie Brown',
+      email: 'charlie.b@example.com',
+      role: 'Admin',
+      status: 'Inactive',
+      lastLogin: '2024-06-01T12:00:00Z',
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '',
+      regdNum: ''
+    },
+     {
+      id: 'USR-004',
+      name: 'Diana Prince',
+      email: 'diana.p@example.com',
+      role: 'Admin',
+      status: 'Active',
+      lastLogin: '2024-07-29T08:00:00Z',
+      avatarUrl: 'https://placehold.co/40x40.png',
+      regdNum: '21050003',
+      phone: ''
+    },
+    {
+      id: 'USR-005',
+      name: 'Seikh Mustakim',
+      email: 'seikhsouvagyamustakim@gmail.com',
+      role: 'Super Admin',
+      status: 'Active',
+      lastLogin: new Date().toISOString(),
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '1234567890',
+      regdNum: ''
+    },
+    {
+      id: 'USR-SA-001',
+      name: 'Super Admin',
+      email: 'superadmin@robo.com',
+      password: 'superadmin@1234',
+      role: 'Super Admin',
+      status: 'Active',
+      lastLogin: new Date().toISOString(),
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '0000000000',
+      regdNum: ''
+    },
+];
+
 export function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [users, setUsers] = useState<User[]>([]);
-
-  useEffect(() => {
-    // This runs on the client, after hydration
-    try {
-      const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
-      if (storedData) {
-        setUsers(JSON.parse(storedData));
-      }
-    } catch (error) {
-      console.error("Failed to read users from localStorage", error);
-      toast({
-        variant: "destructive",
-        title: "System Error",
-        description: "Could not retrieve user data.",
-      })
-    }
-  }, [toast]);
-
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -65,74 +118,70 @@ export function LoginForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     
-    // Listen for storage changes to get the latest user list
-     const handleStorageChange = () => {
+    setTimeout(() => {
+        let allUsers: User[] = [];
         try {
             const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
             if (storedData) {
-                setUsers(JSON.parse(storedData));
-            }
-        } catch (error) {
-            console.error("Failed to read users from localStorage", error);
-        }
-    };
-    window.addEventListener('storage', handleStorageChange);
-
-
-    setTimeout(() => {
-      const user = users.find(u => u.email === values.email);
-
-      // In this demo, the password can be the plain-text 'password' (for original users),
-      // the password set in the user form (for new users), or the hardcoded one.
-      if (user && user.password === values.password) {
-        
-        if(user.role === 'New User') {
-            toast({
-                variant: 'destructive',
-                title: 'Login Failed',
-                description: 'Your account is pending admin approval. Please check back later.'
-            });
-            setIsLoading(false);
-            return;
-        }
-        
-        try {
-            // Create a session object without the password or other large data
-            const sessionUser = { ...user };
-            delete sessionUser.password;
-            
-            window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
-            
-            if (user.role === 'General Member') {
-                router.push("/inventory")
+                allUsers = JSON.parse(storedData);
             } else {
-                router.push("/dashboard")
+                // If no data in local storage, use the initial hardcoded list
+                allUsers = initialUsers;
+                window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(initialUsers));
             }
         } catch (error) {
-            console.error("Failed to save user session", error);
-            
-            let description = "Could not create user session. Please try again."
-            if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-                description = "Your browser storage is full. Please clear some space and try again."
-            }
+            console.error("Failed to process user data from localStorage", error);
+            allUsers = initialUsers; // Fallback to initial users
+        }
 
+        const user = allUsers.find(u => u.email === values.email);
+
+        if (user && user.password === values.password) {
+            if(user.role === 'New User') {
+                toast({
+                    variant: 'destructive',
+                    title: 'Login Failed',
+                    description: 'Your account is pending admin approval. Please check back later.'
+                });
+                setIsLoading(false);
+                return;
+            }
+            
+            try {
+                const sessionUser = { ...user };
+                delete sessionUser.password;
+                
+                window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
+                
+                if (user.role === 'General Member') {
+                    router.push("/inventory")
+                } else {
+                    router.push("/dashboard")
+                }
+            } catch (error) {
+                console.error("Failed to save user session", error);
+                
+                let description = "Could not create user session. Please try again."
+                if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+                    description = "Your browser storage is full. Please clear some space and try again."
+                }
+
+                toast({
+                    variant: "destructive",
+                    title: "Login Error",
+                    description: description,
+                })
+                setIsLoading(false)
+            }
+        } else {
             toast({
-                variant: "destructive",
-                title: "Login Error",
-                description: description,
+            variant: "destructive",
+            title: "Login Failed",
+            description: "Invalid email or password. Please try again.",
             })
             setIsLoading(false)
         }
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-        })
-        setIsLoading(false)
-      }
-      window.removeEventListener('storage', handleStorageChange);
-    }, 1000)
+    }, 500); // Reduced timeout
   }
 
   return (
