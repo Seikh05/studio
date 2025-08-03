@@ -26,78 +26,47 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { PlusCircle, SlidersHorizontal, Trash2, ListTree } from "lucide-react"
+import { PlusCircle, SlidersHorizontal, ListTree } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { ItemForm } from "./item-form"
-import type { InventoryItem, User, Category } from "@/lib/types"
+import type { InventoryItem, User } from "@/lib/types"
 import { Card } from "@/components/ui/card"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { useToast } from "@/hooks/use-toast"
-import { CategoryManager } from "./category-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { Label } from "../ui/label"
-import { initialUsers } from "@/lib/types"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
-    openForm: (item: TData) => void
-    openDeleteDialog: (item: TData) => void
+    onOpenForm: (item: TData | null) => void;
+    onOpenDeleteDialog: (item: TData) => void;
     currentUser: User | null
   }
 }
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  currentUser: User | null;
+  onOpenForm: (item: TData | null) => void;
+  onOpenDeleteDialog: (item: TData) => void;
+  onOpenCategoryManager: () => void;
 }
-
-const defaultCategories: Category[] = [
-    { id: 'cat-1', name: 'Gadgets' },
-    { id: 'cat-2', name: 'Robotics' },
-    { id: 'cat-3', name: 'Apparel' },
-    { id: 'cat-4', name: 'Power Sources' },
-    { id: 'cat-5', name: 'Other' },
-];
 
 export function InventoryDataTable<TData extends InventoryItem, TValue>({
   columns,
-  data: initialData,
+  data,
+  currentUser,
+  onOpenForm,
+  onOpenDeleteDialog,
+  onOpenCategoryManager
 }: DataTableProps<TData, TValue>) {
-  const { toast } = useToast()
   const isMobile = useIsMobile();
   
-  const [data, setData] = React.useState<TData[]>(initialData);
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null);
-  const [categories, setCategories] = React.useState<Category[]>(defaultCategories);
-  const [isCategoryManagerOpen, setIsCategoryManagerOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    // Set a default user since we are not logging in anymore
-    setCurrentUser(initialUsers[0]);
-  }, []);
-
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
-  const [isFormOpen, setIsFormOpen] = React.useState(false)
-  const [selectedItem, setSelectedItem] = React.useState<TData | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
-  const [itemToDelete, setItemToDelete] = React.useState<TData | null>(null)
-  const [deleteConfirmText, setDeleteConfirmText] = React.useState("")
 
   React.useEffect(() => {
     if (isMobile) {
@@ -109,14 +78,6 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       setColumnVisibility({})
     }
   }, [isMobile])
-
-  const openForm = (item: TData | null) => {
-    toast({ title: "Static Mode", description: "Adding or editing items is disabled in static mode."})
-  }
-
-  const openDeleteDialog = () => {
-     toast({ title: "Static Mode", description: "Deleting items is disabled in static mode."})
-  }
 
   const table = useReactTable({
     data,
@@ -134,14 +95,14 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
       columnVisibility,
     },
     meta: {
-      openForm,
-      openDeleteDialog,
+      onOpenForm,
+      onOpenDeleteDialog,
       currentUser,
     }
   })
 
   const handleOpenNew = () => {
-    openForm(null);
+    onOpenForm(null);
   }
 
   const canManageInventory = currentUser && currentUser.role !== 'General Member';
@@ -168,11 +129,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
             </div>
 
             <div className="flex items-center gap-2">
-                <Button variant="outline" className="hidden md:flex" onClick={() => toast({title: "Static Mode", description: "Category management is disabled."})}>
+                <Button variant="outline" className="hidden md:flex" onClick={onOpenCategoryManager}>
                     <ListTree className="mr-2 h-4 w-4" />
                     Edit Categories
                 </Button>
-                <Button variant="outline" size="icon" className="md:hidden" onClick={() => toast({title: "Static Mode", description: "Category management is disabled."})}>
+                <Button variant="outline" size="icon" className="md:hidden" onClick={onOpenCategoryManager}>
                     <ListTree className="h-4 w-4" />
                     <span className="sr-only">Edit Categories</span>
                 </Button>
@@ -277,4 +238,3 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     </div>
   )
 }
-
