@@ -29,6 +29,7 @@ const formSchema = z.object({
 })
 
 const USER_STORAGE_KEY = 'user-data';
+const LOGGED_IN_USER_KEY = 'logged-in-user';
 
 export function SignUpForm() {
   const router = useRouter()
@@ -87,13 +88,19 @@ export function SignUpForm() {
 
         try {
             window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(allUsers));
+            
+            // Automatically log the new user in
+            const sessionUser = { ...newUser };
+            delete sessionUser.password;
+            window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
+
             toast({
                 title: "Registration Successful",
-                description: "Your Super Admin account has been created.",
+                description: "Your Super Admin account has been created and you are now logged in.",
             });
-            router.push("/login");
+            router.push("/dashboard");
         } catch (error) {
-            console.error("Failed to save new user", error);
+            console.error("Failed to save new user or log in", error);
              toast({
                 variant: "destructive",
                 title: "Registration Error",
