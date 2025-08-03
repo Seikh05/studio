@@ -76,7 +76,7 @@ export default function DashboardPage() {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('inventory-updated', handleStorageChange);
     window.addEventListener('users-updated', handleStorageChange);
-    window.addEventListener('logs-updated', handleStorageChange); // Listen for logs as they contain transaction info implicitly
+    window.addEventListener('logs-updated', handleStorageChange);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);

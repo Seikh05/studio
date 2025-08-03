@@ -97,12 +97,16 @@ export default function ItemLogPage() {
     loadData();
 
     // Listen for changes from other tabs/windows
-    window.addEventListener('storage', loadData);
-    window.addEventListener('inventory-updated', loadData);
+    const handleStorageChange = () => loadData();
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('inventory-updated', handleStorageChange);
+    window.addEventListener('logs-updated', handleStorageChange);
+
 
     return () => {
-      window.removeEventListener('storage', loadData);
-      window.removeEventListener('inventory-updated', loadData);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('inventory-updated', handleStorageChange);
+      window.removeEventListener('logs-updated', handleStorageChange);
     }
   }, [itemId, loadData]);
 

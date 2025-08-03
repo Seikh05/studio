@@ -94,9 +94,12 @@ export default function InventoryPage() {
         const handleDataChanges = () => loadData();
         window.addEventListener('storage', handleDataChanges);
         window.addEventListener('inventory-updated', handleDataChanges);
+        window.addEventListener('users-updated', handleDataChanges);
+
         return () => {
             window.removeEventListener('storage', handleDataChanges);
             window.removeEventListener('inventory-updated', handleDataChanges);
+            window.removeEventListener('users-updated', handleDataChanges);
         }
     }, [loadData]);
 

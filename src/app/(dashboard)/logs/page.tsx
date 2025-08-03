@@ -64,10 +64,13 @@ export default function LogsPage() {
 
       window.addEventListener('storage', handleStorageChange);
       window.addEventListener('logs-updated', handleStorageChange);
+      window.addEventListener('inventory-updated', handleStorageChange);
+
 
       return () => {
         window.removeEventListener('storage', handleStorageChange);
         window.removeEventListener('logs-updated', handleStorageChange);
+        window.removeEventListener('inventory-updated', handleStorageChange);
       };
     }
   }, [isClient, loadLogs]);
