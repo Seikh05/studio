@@ -84,7 +84,7 @@ export function LoginForm() {
 
       // In this demo, the password can be the plain-text 'password' (for original users),
       // the password set in the user form (for new users), or the hardcoded one.
-      if (user && (user.password === values.password || values.password === 'password' || !user.password)) {
+      if (user && user.password === values.password) {
         
         if(user.role === 'New User') {
             toast({
