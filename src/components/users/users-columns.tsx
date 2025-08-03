@@ -3,8 +3,8 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import Image from "next/image"
-import { MoreHorizontal, ArrowUpDown, CheckSquare, Trash2 } from "lucide-react"
-import { format } from 'date-fns'
+import { MoreHorizontal, ArrowUpDown, CheckSquare, Trash2, Edit } from "lucide-react"
+import { format, formatRelative } from 'date-fns'
 import { useState, useEffect } from "react"
 
 import { Button } from "@/components/ui/button"
@@ -25,7 +25,7 @@ const LastLoginCell = ({ row }: { row: any }) => {
 
   useEffect(() => {
     try {
-      setFormattedDate(format(new Date(lastLogin), "PPp"));
+      setFormattedDate(formatRelative(new Date(lastLogin), new Date()));
     } catch (e) {
       setFormattedDate('Invalid date');
     }
@@ -36,7 +36,7 @@ const LastLoginCell = ({ row }: { row: any }) => {
     return <span>Loading...</span>;
   }
 
-  return <span>{formattedDate}</span>;
+  return <span className="capitalize">{formattedDate}</span>;
 };
 
 export const usersColumns: ColumnDef<User>[] = [
@@ -88,6 +88,9 @@ export const usersColumns: ColumnDef<User>[] = [
   {
     accessorKey: "role",
     header: "Role",
+    filterFn: (row, id, value) => {
+        return value.includes(row.getValue(id))
+    },
      cell: ({ row }) => {
       const role = row.getValue("role") as string
       let variant: "outline" | "secondary" | "default" | "destructive" = "default";
@@ -119,14 +122,13 @@ export const usersColumns: ColumnDef<User>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const user = row.original
-      // @ts-ignore
       const { currentUser } = table.options.meta || {};
       
       const canApprove = currentUser?.role === 'Super Admin' || currentUser?.role === 'Admin';
       const canManageUsers = currentUser?.role === 'Super Admin'; // Only Super Admin can edit/delete
       const isSelf = currentUser?.id === user.id;
 
-      if (!canApprove && !canManageUsers) return null;
+      if (!currentUser || (!canApprove && !canManageUsers)) return null;
 
       return (
         <div className="text-right">
@@ -141,20 +143,21 @@ export const usersColumns: ColumnDef<User>[] = [
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               {canApprove && user.role === 'New User' && (
                 <>
-                    <DropdownMenuItem onClick={() => table.options.meta?.approveUser?.(user)}>
+                    <DropdownMenuItem onClick={() => table.options.meta?.onApproveUser?.(user)}>
                        <CheckSquare className="mr-2 h-4 w-4" />
                        Approve User
                     </DropdownMenuItem>
                     <DropdownMenuItem 
                         className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                        onClick={() => table.options.meta?.openDenyDialog?.(user)}>
+                        onClick={() => table.options.meta?.onOpenDenyDialog?.(user)}>
                        <Trash2 className="mr-2 h-4 w-4" />
                        Deny User
                     </DropdownMenuItem>
                 </>
               )}
                {canManageUsers && user.role !== 'New User' && (
-                <DropdownMenuItem onClick={() => table.options.meta?.openForm?.(user)}>
+                <DropdownMenuItem onClick={() => table.options.meta?.onOpenForm?.(user)}>
+                  <Edit className="mr-2 h-4 w-4" />
                   Edit user
                 </DropdownMenuItem>
               )}
@@ -163,8 +166,9 @@ export const usersColumns: ColumnDef<User>[] = [
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                    onClick={() => table.options.meta?.openDeleteDialog?.(user)}
+                    onClick={() => table.options.meta?.onOpenDeleteDialog?.(user)}
                   >
+                    <Trash2 className="mr-2 h-4 w-4" />
                     Remove user
                   </DropdownMenuItem>
                 </>

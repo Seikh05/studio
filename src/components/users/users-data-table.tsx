@@ -34,7 +34,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { User } from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
 import { Card } from "../ui/card"
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "../ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -42,10 +41,10 @@ import { useIsMobile } from "@/hooks/use-mobile"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
-    openForm: (user: TData) => void;
-    openDeleteDialog: (user: TData) => void;
-    approveUser: (user: TData) => void;
-    openDenyDialog: (user: TData) => void;
+    onOpenForm: (user: TData | null) => void;
+    onOpenDeleteDialog: (user: TData) => void;
+    onApproveUser: (user: TData) => void;
+    onOpenDenyDialog: (user: TData) => void;
     currentUser: User | null;
   }
 }
@@ -55,6 +54,10 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   onDataChange: () => void;
   currentUser: User | null;
+  onOpenForm: (user: TData | null) => void;
+  onOpenDeleteDialog: (user: TData) => void;
+  onApproveUser: (user: TData) => void;
+  onOpenDenyDialog: (user: TData) => void;
 }
 
 export function UserDataTable<TData extends User, TValue>({
@@ -62,8 +65,11 @@ export function UserDataTable<TData extends User, TValue>({
   data,
   onDataChange,
   currentUser,
+  onOpenForm,
+  onOpenDeleteDialog,
+  onApproveUser,
+  onOpenDenyDialog,
 }: DataTableProps<TData, TValue>) {
-  const { toast } = useToast()
   const isMobile = useIsMobile();
 
   const [sorting, setSorting] = React.useState<SortingState>([])
@@ -100,10 +106,10 @@ export function UserDataTable<TData extends User, TValue>({
       columnVisibility,
     },
     meta: {
-      openForm: () => toast({title: "Static Mode", description: "User management is disabled."}),
-      openDeleteDialog: () => toast({title: "Static Mode", description: "User management is disabled."}),
-      openDenyDialog: () => toast({title: "Static Mode", description: "User management is disabled."}),
-      approveUser: () => toast({title: "Static Mode", description: "User management is disabled."}),
+      onOpenForm,
+      onOpenDeleteDialog,
+      onApproveUser,
+      onOpenDenyDialog,
       currentUser,
     }
   })
@@ -117,7 +123,7 @@ export function UserDataTable<TData extends User, TValue>({
   }, [showPendingOnly, table]);
 
   const handleOpenNew = () => {
-    toast({title: "Static Mode", description: "Adding users is disabled."})
+    onOpenForm(null);
   }
 
   const canAddUsers = currentUser?.role === 'Super Admin';
