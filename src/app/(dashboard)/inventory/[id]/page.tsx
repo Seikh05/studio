@@ -55,10 +55,8 @@ export default function ItemLogPage() {
   const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
 
 
-  React.useEffect(() => {
-    setIsClient(true);
+  const loadData = React.useCallback(() => {
     if (!itemId) return;
-
     try {
       // Fetch item
       const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
@@ -94,32 +92,46 @@ export default function ItemLogPage() {
   }, [itemId, toast]);
 
   React.useEffect(() => {
-    if (selectedDate) {
-      const filtered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
-      setFilteredTransactions(filtered);
-    } else {
-      setFilteredTransactions(allTransactions);
+    setIsClient(true);
+    loadData();
+
+    // Listen for changes from other tabs/windows
+    window.addEventListener('storage', loadData);
+    window.addEventListener('inventory-updated', loadData);
+
+    return () => {
+      window.removeEventListener('storage', loadData);
+      window.removeEventListener('inventory-updated', loadData);
     }
+  }, [itemId, loadData]);
+
+  React.useEffect(() => {
+    let dateFiltered = allTransactions;
+    if (selectedDate) {
+      dateFiltered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
+    }
+    setFilteredTransactions(dateFiltered);
   }, [selectedDate, allTransactions]);
 
   const handleTransactionUpdate = (updatedTransactions: ItemTransaction[], updatedItem: InventoryItem) => {
      // Update state
     setItem(updatedItem);
     setAllTransactions(updatedTransactions);
-    setFilteredTransactions(updatedTransactions); // Also update filtered view
 
     try {
       // Update inventory in localStorage
       const inventoryData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
-      if (inventoryData) {
-        let inventory: InventoryItem[] = JSON.parse(inventoryData);
-        inventory = inventory.map(i => i.id === itemId ? updatedItem : i);
-        window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
-      }
+      let inventory: InventoryItem[] = inventoryData ? JSON.parse(inventoryData) : [];
+      inventory = inventory.map(i => i.id === itemId ? updatedItem : i);
+      window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(inventory));
 
       // Update transactions in localStorage
       const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${itemId}`;
       window.localStorage.setItem(transactionsKey, JSON.stringify(updatedTransactions));
+      
+      // Dispatch events to notify other components/pages
+      window.dispatchEvent(new Event('inventory-updated'));
+      window.dispatchEvent(new Event('storage'));
 
     } catch (error) {
        console.error('Failed to save data to localStorage', error);
@@ -321,7 +333,7 @@ export default function ItemLogPage() {
             <AlertDialogTitle>Log Item Return</AlertDialogTitle>
             <AlertDialogDescription>
               Log a return for <strong>{item.name}</strong> from borrower <strong>{transactionToReturn?.borrowerName}</strong>. 
-              They currently have {quantityDue} item(s) due from borrow ID {transactionToReturn?.id}.
+              They currently have {quantityDue} item(s) due from borrow ID {transactionToReturn?.id.substring(0,8)}...
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">

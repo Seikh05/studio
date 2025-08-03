@@ -72,8 +72,13 @@ export default function DueItemsPage() {
     React.useEffect(() => {
         loadDueItems();
         // Add listeners for changes to re-calculate
-        window.addEventListener('storage', loadDueItems);
-        return () => window.removeEventListener('storage', loadDueItems);
+        const handleStorageChange = () => loadDueItems();
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('inventory-updated', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('inventory-updated', handleStorageChange);
+        }
     }, [loadDueItems]);
 
     React.useEffect(() => {
