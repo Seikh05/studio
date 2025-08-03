@@ -77,8 +77,8 @@ export function SignUpForm() {
             name: values.name,
             email: values.email,
             password: values.password,
-            role: 'New User',
-            status: 'Inactive',
+            role: 'Super Admin',
+            status: 'Active',
             lastLogin: new Date().toISOString(),
             avatarUrl: `https://placehold.co/40x40.png`,
         };
@@ -89,7 +89,7 @@ export function SignUpForm() {
             window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(allUsers));
             toast({
                 title: "Registration Successful",
-                description: "Your account has been created and is pending admin approval.",
+                description: "Your Super Admin account has been created.",
             });
             router.push("/login");
         } catch (error) {
