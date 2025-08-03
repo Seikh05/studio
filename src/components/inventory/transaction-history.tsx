@@ -53,52 +53,38 @@ export function TransactionHistory({ transactions, onReturn, highlightedTransact
 
   const getTransactionTitle = (transaction: ItemTransaction) => {
     const byAdmin = `by ${transaction.adminName}`;
+    const itemName = transaction.itemName || 'Item'; // Fallback for item name
 
+    // Handle Borrow Transactions
     if (transaction.type === 'borrow') {
-      let title = `Borrowed by ${transaction.borrowerName}`;
-      if(transaction.borrowerRegdNum) {
-        title += ` (${transaction.borrowerRegdNum})`
-      }
-      if(transaction.borrowerPhone) {
-        title += ` - ${transaction.borrowerPhone}`
-      }
+        let borrowerInfo = transaction.borrowerName || 'Unknown Borrower';
+        if (transaction.borrowerRegdNum) borrowerInfo += ` (${transaction.borrowerRegdNum})`;
+        if (transaction.borrowerPhone) borrowerInfo += ` - ${transaction.borrowerPhone}`;
 
-      if (transaction.itemName) {
-        title = `${transaction.itemName} borrowed by ${transaction.borrowerName}`
-        if(transaction.borrowerRegdNum) {
-          title += ` (${transaction.borrowerRegdNum})`
-        }
-        if(transaction.borrowerPhone) {
-          title += ` - ${transaction.borrowerPhone}`
-        }
-      }
-      return (
-        <span className="cursor-pointer hover:underline" onClick={() => transaction.itemId && router.push(`/inventory/${transaction.itemId}`)}>
-            {transaction.itemName || 'Item'} borrowed by {transaction.borrowerName} (approved {byAdmin})
-        </span>
-      )
+        const title = `${itemName} borrowed by ${borrowerInfo}`;
+        
+        return (
+             <span className="cursor-pointer hover:underline" onClick={() => transaction.itemId && router.push(`/inventory/${transaction.itemId}`)}>
+                {title} (approved {byAdmin})
+            </span>
+        );
     }
     
-    // Handle return transactions
-    let title = 'Returned to stock';
-    if (transaction.itemName) {
-      title = `${transaction.itemName} returned to stock`;
-    }
-    
+    // Handle Return Transactions
+    let returnTitle = `${itemName} returned to stock`;
     if (transaction.borrowerName) {
-      title += ` from ${transaction.borrowerName}`
-      if (transaction.borrowerRegdNum) {
-         title += ` (${transaction.borrowerRegdNum})`
+      returnTitle += ` from ${transaction.borrowerName}`;
+       if (transaction.borrowerRegdNum) {
+         returnTitle += ` (${transaction.borrowerRegdNum})`;
       }
     }
-    if (transaction.relatedBorrowId) {
-        title += ` (Ref: ${transaction.relatedBorrowId.substring(0,8)}...)`
+     if (transaction.relatedBorrowId) {
+        returnTitle += ` (Ref: ${transaction.relatedBorrowId.substring(0,8)}...)`;
     }
-
 
     return (
         <span className="cursor-pointer hover:underline" onClick={() => transaction.itemId && router.push(`/inventory/${transaction.itemId}`)}>
-            {title} (logged {byAdmin})
+            {returnTitle} (logged {byAdmin})
         </span>
     );
   }
