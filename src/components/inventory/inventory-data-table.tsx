@@ -63,10 +63,18 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   onOpenCategoryManager
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
+  const isGeneralMember = currentUser?.role === 'General Member';
   
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+
+  const filteredColumns = React.useMemo(() => {
+    if (isGeneralMember) {
+      return columns.filter(col => col.accessorKey === 'name' || col.accessorKey === 'stock');
+    }
+    return columns;
+  }, [columns, isGeneralMember]);
 
   React.useEffect(() => {
     if (isMobile) {
@@ -81,7 +89,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
 
   const table = useReactTable({
     data,
-    columns,
+    columns: filteredColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
@@ -209,7 +217,7 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={filteredColumns.length} className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>

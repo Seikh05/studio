@@ -97,6 +97,7 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   {
     accessorKey: "category",
     header: "Category",
+    enableHiding: true,
   },
     {
     accessorKey: "stock",
@@ -109,6 +110,7 @@ export const inventoryColumns: ColumnDef<InventoryItem>[] = [
   {
     id: "log",
     header: () => <div className="text-center">Log</div>,
+    enableHiding: true,
     cell: ({ row }) => {
       const item = row.original;
       const router = useRouter();
