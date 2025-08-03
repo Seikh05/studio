@@ -37,6 +37,10 @@ export default function LogsPage() {
       setAllLogs([]);
     }
   }, []);
+
+  const onLogsChange = React.useCallback(() => {
+    loadLogs();
+  }, [loadLogs]);
   
   React.useEffect(() => {
     setIsClient(true)
