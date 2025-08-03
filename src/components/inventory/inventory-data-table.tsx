@@ -50,6 +50,7 @@ import { useToast } from "@/hooks/use-toast"
 import { CategoryManager } from "./category-manager"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { Label } from "../ui/label"
+import { initialInventory, initialUsers } from "@/lib/types"
 
 declare module '@tanstack/react-table' {
   interface TableMeta<TData extends RowData> {
@@ -143,12 +144,13 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
           setCurrentUser(JSON.parse(storedUser));
         }
 
-        // Load inventory
+        // Load inventory, falling back to props if none in storage
         const storedData = window.localStorage.getItem(INVENTORY_STORAGE_KEY);
         if (storedData) {
           setData(JSON.parse(storedData));
         } else {
            window.localStorage.setItem(INVENTORY_STORAGE_KEY, JSON.stringify(initialData));
+           setData(initialData);
         }
         // Load categories
         const storedCategories = window.localStorage.getItem(CATEGORIES_STORAGE_KEY);
@@ -325,7 +327,11 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
   }
 
   if (!isClient) {
-    return null; // Or a loading skeleton
+    return (
+        <div className="flex items-center justify-center h-full">
+            <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
   }
 
   const canManageInventory = currentUser && currentUser.role !== 'General Member';
@@ -509,5 +515,3 @@ export function InventoryDataTable<TData extends InventoryItem, TValue>({
     </div>
   )
 }
-
-    

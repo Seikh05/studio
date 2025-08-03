@@ -3,10 +3,10 @@
 
 import * as React from 'react';
 import type { User } from '@/lib/types';
-import { initialUsers } from '@/lib/types';
 import { UserDataTable } from '@/components/users/users-data-table';
 import { usersColumns } from '@/components/users/users-columns';
 import { LoaderCircle } from 'lucide-react';
+import { initialUsers } from '@/lib/types';
 
 const STORAGE_KEY = 'user-data';
 const LOGGED_IN_USER_KEY = 'logged-in-user';
