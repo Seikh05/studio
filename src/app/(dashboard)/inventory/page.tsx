@@ -6,7 +6,7 @@ import { InventoryDataTable } from '@/components/inventory/inventory-data-table'
 import { inventoryColumns } from '@/components/inventory/inventory-columns';
 import { initialInventory, initialUsers, User, InventoryItem, LogEntry, Category } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle, Trash2 } from 'lucide-react';
 import { ItemForm } from '@/components/inventory/item-form';
 import {
   AlertDialog,
