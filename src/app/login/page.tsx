@@ -3,19 +3,10 @@
 
 import * as React from 'react';
 import { LoginForm } from '@/components/auth/login-form';
-import { RegistrationForm } from '@/components/auth/registration-form';
 import Image from 'next/image';
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LoginPage() {
-  const [activeTab, setActiveTab] = React.useState('sign-in');
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -34,26 +25,15 @@ export default function LoginPage() {
            <CardHeader className="text-center">
              <CardTitle className="text-3xl">Robostreaks Inventory</CardTitle>
              <CardDescription>
-                Sign in to your account or create a new one to get started.
+                Sign in to your account to get started.
              </CardDescription>
            </CardHeader>
            <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="sign-in">Sign In</TabsTrigger>
-                  <TabsTrigger value="sign-up">Sign Up</TabsTrigger>
-              </TabsList>
-              <TabsContent value="sign-in">
-                  <LoginForm />
-              </TabsContent>
-              <TabsContent value="sign-up">
-                  <RegistrationForm onSuccess={() => setActiveTab('sign-in')} />
-              </TabsContent>
-            </Tabs>
+              <LoginForm />
            </CardContent>
         </Card>
          <p className="mt-8 text-center text-sm text-muted-foreground">
-          Super-admin or admin access required for management tasks.
+          Sign in as Super Admin to manage the inventory.
         </p>
       </div>
     </div>
