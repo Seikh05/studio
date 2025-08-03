@@ -67,8 +67,12 @@ export default function UsersPage() {
     // Custom event listener for when user data is updated elsewhere
     React.useEffect(() => {
         const handleUsersUpdated = () => loadData();
+        window.addEventListener('storage', handleUsersUpdated);
         window.addEventListener('users-updated', handleUsersUpdated);
-        return () => window.removeEventListener('users-updated', handleUsersUpdated);
+        return () => {
+            window.removeEventListener('storage', handleUsersUpdated);
+            window.removeEventListener('users-updated', handleUsersUpdated);
+        }
     }, [loadData]);
 
     const openForm = (user: User | null) => {

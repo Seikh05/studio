@@ -91,9 +91,13 @@ export default function InventoryPage() {
     
     // Custom event listener for when inventory data is updated elsewhere
     React.useEffect(() => {
-        const handleInventoryUpdated = () => loadData();
-        window.addEventListener('inventory-updated', handleInventoryUpdated);
-        return () => window.removeEventListener('inventory-updated', handleInventoryUpdated);
+        const handleDataChanges = () => loadData();
+        window.addEventListener('storage', handleDataChanges);
+        window.addEventListener('inventory-updated', handleDataChanges);
+        return () => {
+            window.removeEventListener('storage', handleDataChanges);
+            window.removeEventListener('inventory-updated', handleDataChanges);
+        }
     }, [loadData]);
 
 
