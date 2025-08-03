@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import type { User } from "@/lib/types"
 import { initialUsers } from "@/lib/types"
+import Link from "next/link"
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -114,9 +115,27 @@ export function LoginForm() {
     }, 500); // Reduced timeout
   }
 
+  const handleForgotPassword = () => {
+    // In a real app, this would trigger an API call.
+    // For now, we'll just show a toast.
+    const email = form.getValues("email");
+    if (!email) {
+         toast({
+            variant: "destructive",
+            title: "Email Required",
+            description: "Please enter your email address to reset your password.",
+        });
+        return;
+    }
+     toast({
+        title: "Password Reset",
+        description: `If an account exists for ${email}, a password reset link has been sent.`,
+    });
+  }
+
   return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -135,7 +154,17 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                    <div className="flex items-center justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <Button
+                            type="button"
+                            variant="link"
+                            className="h-auto p-0 text-sm"
+                            onClick={handleForgotPassword}
+                        >
+                            Forgot password?
+                        </Button>
+                    </div>
                   <FormControl>
                     <div className="relative">
                       <Input 
@@ -163,6 +192,13 @@ export function LoginForm() {
               {isLoading && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               Sign In
             </Button>
+
+            <div className="text-center text-sm text-muted-foreground">
+                Don&apos;t have an account?{" "}
+                <Link href="/signup" className="font-semibold text-primary hover:underline">
+                    Sign Up
+                </Link>
+            </div>
         </form>
       </Form>
   )

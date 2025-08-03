@@ -1,11 +1,11 @@
 
 'use client';
 
-import { LoginForm } from '@/components/auth/login-form';
+import { SignUpForm } from '@/components/auth/signup-form';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import Image from 'next/image';
 
-export default function LoginPage() {
+export default function SignUpPage() {
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-muted/40 p-4">
       <Card className="w-full max-w-md">
@@ -20,15 +20,16 @@ export default function LoginPage() {
                     />
                 </div>
             </div>
-          <CardTitle>Sign In</CardTitle>
+          <CardTitle>Create an Account</CardTitle>
           <CardDescription>
-            Welcome back! Enter your credentials to access your account.
+            Enter your details to register. Your account will need admin approval.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LoginForm />
+          <SignUpForm />
         </CardContent>
       </Card>
     </div>
   );
 }
+
