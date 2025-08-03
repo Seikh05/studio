@@ -62,6 +62,17 @@ const initialUsers: User[] = [
       avatarUrl: 'https://placehold.co/40x40.png',
       phone: '1234567890'
     },
+    {
+      id: 'USR-SA-001',
+      name: 'Super Admin',
+      email: 'superadmin@robo.com',
+      password: 'superadmin@1234',
+      role: 'Super Admin',
+      status: 'Active',
+      lastLogin: new Date().toISOString(),
+      avatarUrl: 'https://placehold.co/40x40.png',
+      phone: '0000000000'
+    },
 ];
 
 export default function UsersPage() {

@@ -82,8 +82,8 @@ export function LoginForm() {
     setTimeout(() => {
       const user = users.find(u => u.email === values.email);
 
-      // In this demo, the password is either the plain-text 'password' (for original users)
-      // or it matches the password set in the user form (for new users).
+      // In this demo, the password can be the plain-text 'password' (for original users),
+      // the password set in the user form (for new users), or the hardcoded one.
       if (user && (user.password === values.password || values.password === 'password' || !user.password)) {
         
         if(user.role === 'New User') {
