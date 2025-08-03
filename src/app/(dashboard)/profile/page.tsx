@@ -35,21 +35,6 @@ type ProfileFormData = z.infer<typeof profileSchema>;
 
 // Helper to simulate image hosting
 const imageHost = {
-  save: (dataUrl: string): string => {
-    try {
-      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
-      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
-      const imageId = `hosted-img-${Date.now()}`;
-      hostedImages[imageId] = dataUrl;
-      // To prevent quota issues with the image host itself, we can prune old images
-      // For now, we'll just overwrite, but a real solution would be more complex.
-      window.localStorage.setItem(HOSTED_IMAGE_STORAGE_KEY, JSON.stringify(hostedImages));
-      return imageId;
-    } catch (error) {
-      console.error("Failed to save image to virtual host", error);
-      return PLACEHOLDER_AVATAR; // Fallback
-    }
-  },
   get: (imageId: string): string => {
     if (!imageId || !imageId.startsWith('hosted-img-')) return imageId;
     try {
@@ -59,6 +44,31 @@ const imageHost = {
     } catch (error) {
       console.error("Failed to get image from virtual host", error);
       return PLACEHOLDER_AVATAR;
+    }
+  },
+  save: (dataUrl: string): string => {
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      const hostedImages = hostedImagesRaw ? JSON.parse(hostedImagesRaw) : {};
+      const imageId = `hosted-img-${Date.now()}`;
+      hostedImages[imageId] = dataUrl;
+      window.localStorage.setItem(HOSTED_IMAGE_STORAGE_KEY, JSON.stringify(hostedImages));
+      return imageId;
+    } catch (error) {
+      console.error("Failed to save image to virtual host", error);
+      throw error; // Re-throw to be caught by the caller
+    }
+  },
+  remove: (imageId: string | undefined) => {
+    if (!imageId || !imageId.startsWith('hosted-img-')) return;
+    try {
+      const hostedImagesRaw = window.localStorage.getItem(HOSTED_IMAGE_STORAGE_KEY);
+      if (!hostedImagesRaw) return;
+      const hostedImages = JSON.parse(hostedImagesRaw);
+      delete hostedImages[imageId];
+      window.localStorage.setItem(HOSTED_IMAGE_STORAGE_KEY, JSON.stringify(hostedImages));
+    } catch (error) {
+      console.error("Failed to remove image from virtual host", error);
     }
   }
 };
@@ -72,6 +82,7 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const [avatarDisplayUrl, setAvatarDisplayUrl] = React.useState<string | undefined>(PLACEHOLDER_AVATAR);
+  const [previousAvatarId, setPreviousAvatarId] = React.useState<string | undefined>(undefined);
 
 
   const {
@@ -106,6 +117,7 @@ export default function ProfilePage() {
           phone: fullUser.phone || '',
           regdNum: fullUser.regdNum || '',
         });
+        setPreviousAvatarId(fullUser.avatarUrl);
       }
     } catch (error) {
       console.error('Failed to retrieve user from storage', error);
@@ -138,13 +150,29 @@ export default function ProfilePage() {
       const reader = new FileReader();
       setIsUploading(true);
       reader.onloadend = () => {
-        const hostedImageId = imageHost.save(reader.result as string);
-        setValue('avatarUrl', hostedImageId, { shouldValidate: true, shouldDirty: true });
-        setIsUploading(false);
-         toast({
-            title: 'Image Ready',
-            description: 'Your new profile picture is ready to be saved.',
-        });
+        try {
+          const newImageId = imageHost.save(reader.result as string);
+          // Set new value and clean up old image if there was one
+          setValue('avatarUrl', newImageId, { shouldValidate: true, shouldDirty: true });
+          imageHost.remove(previousAvatarId); // Remove the old image
+          setPreviousAvatarId(newImageId); // The new image is now the "previous" one for the next upload
+          toast({
+              title: 'Image Ready',
+              description: 'Your new profile picture is ready to be saved.',
+          });
+        } catch(e: any) {
+            let description = "Could not save the new image.";
+            if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+                description = "The browser storage is full. Please remove the current image before uploading a new one.";
+            }
+            toast({
+              variant: 'destructive',
+              title: 'Upload Failed',
+              description,
+            });
+        } finally {
+            setIsUploading(false);
+        }
       };
       reader.onerror = () => {
         setIsUploading(false);
@@ -159,6 +187,7 @@ export default function ProfilePage() {
   };
 
   const handleRemoveImage = () => {
+    imageHost.remove(formAvatarUrl); // Remove from our virtual host
     setValue('avatarUrl', '', { shouldValidate: true, shouldDirty: true });
     toast({
         title: 'Image Removed',
@@ -175,8 +204,10 @@ export default function ProfilePage() {
     setIsSaving(true);
     
     try {
-      const updatedUser = { ...user, ...data, avatarUrl: data.avatarUrl || PLACEHOLDER_AVATAR };
-      
+      // Use placeholder if avatarUrl is empty, otherwise use the value from the form
+      const finalAvatarUrl = data.avatarUrl || PLACEHOLDER_AVATAR;
+      const updatedUser = { ...user, ...data, avatarUrl: finalAvatarUrl };
+
       window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(updatedUser));
 
       const allUsersRaw = window.localStorage.getItem(USER_STORAGE_KEY);
@@ -187,6 +218,8 @@ export default function ProfilePage() {
       }
       
       setUser(updatedUser);
+       // After successful save, the new avatar becomes the one to be replaced next time
+      setPreviousAvatarId(finalAvatarUrl);
       toast({
         title: 'Profile Updated',
         description: 'Your changes have been saved successfully.',
