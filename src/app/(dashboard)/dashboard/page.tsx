@@ -46,7 +46,7 @@ export default function DashboardPage() {
         if (transactionsData) {
           const itemTransactions: ItemTransaction[] = JSON.parse(transactionsData);
           // Add item info to each transaction for the recent activity log
-          const transactionsWithItem = itemTransactions.map(t => ({...t, itemName: item.name}));
+          const transactionsWithItem = itemTransactions.map(t => ({...t, itemName: item.name, itemId: item.id}));
           allTransactions.push(...transactionsWithItem);
         }
       });
@@ -76,11 +76,13 @@ export default function DashboardPage() {
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('inventory-updated', handleStorageChange);
     window.addEventListener('users-updated', handleStorageChange);
+    window.addEventListener('logs-updated', handleStorageChange); // Listen for logs as they contain transaction info implicitly
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('inventory-updated', handleStorageChange);
       window.removeEventListener('users-updated', handleStorageChange);
+       window.removeEventListener('logs-updated', handleStorageChange);
     }
   }, [loadDashboardData]);
 

@@ -71,6 +71,7 @@ export default function ItemLogPage() {
       const transactionsData = window.localStorage.getItem(transactionsKey);
       if (transactionsData) {
         const itemTransactions = JSON.parse(transactionsData);
+        itemTransactions.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
         setAllTransactions(itemTransactions);
         setFilteredTransactions(itemTransactions);
       }

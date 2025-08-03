@@ -95,7 +95,7 @@ export default function LogsPage() {
             selectedDate={selectedDate} 
             onDateChange={setSelectedDate}
             currentUser={currentUser}
-            onLogsChange={loadLogs}
+            onLogsChange={onLogsChange}
             showHidden={showHidden}
             onShowHiddenChange={setShowHidden}
         />;
