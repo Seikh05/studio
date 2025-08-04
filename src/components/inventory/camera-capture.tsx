@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -25,38 +26,51 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
+  const [stream, setStream] = React.useState<MediaStream | null>(null);
   
   React.useEffect(() => {
-    let stream: MediaStream | null = null;
     
-    const getCameraPermission = async () => {
+    const enableStream = async () => {
       if (!isOpen) return;
 
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        setStream(newStream);
         setHasCameraPermission(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
       } catch (error) {
         console.error('Error accessing camera:', error);
         setHasCameraPermission(false);
         toast({
           variant: 'destructive',
           title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this feature.',
+          description: 'Please enable camera permissions. This feature may require a secure (HTTPS) connection.',
         });
       }
     };
 
-    getCameraPermission();
+    if (isOpen) {
+      enableStream();
+    } else {
+      // Cleanup stream when dialog is closed
+      if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+          setStream(null);
+          setHasCameraPermission(null);
+      }
+    }
 
     return () => {
-        if (stream) {
-            stream.getTracks().forEach(track => track.stop());
-        }
+      if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+      }
     }
-  }, [isOpen, toast]);
+  }, [isOpen]);
+
+  React.useEffect(() => {
+    if (stream && videoRef.current) {
+        videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
 
   const handleCapture = () => {
@@ -86,26 +100,24 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
           {hasCameraPermission === null && (
             <div className="flex items-center justify-center h-60 bg-muted rounded-md">
                 <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-                <p className="ml-2">Requesting camera access...</p>
+                <p className="ml-2">Requesting camera...</p>
             </div>
           )}
 
           {hasCameraPermission === false && (
             <Alert variant="destructive">
                 <VideoOff className="h-4 w-4" />
-                <AlertTitle>Camera Access Required</AlertTitle>
+                <AlertTitle>Camera Not Available</AlertTitle>
                 <AlertDescription>
-                  Camera access was denied. Please enable it in your browser settings and try again.
+                  Could not access the camera. Please ensure you've granted permission and are on a secure (HTTPS) connection.
                 </AlertDescription>
             </Alert>
           )}
 
-          {hasCameraPermission === true && (
-             <div className="relative">
-                <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
-                <canvas ref={canvasRef} className="hidden" />
-             </div>
-          )}
+          <div className={hasCameraPermission ? 'block' : 'hidden'}>
+              <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+              <canvas ref={canvasRef} className="hidden" />
+          </div>
         </div>
 
         <DialogFooter>
