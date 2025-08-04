@@ -27,51 +27,53 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
   const videoRef = React.useRef<HTMLVideoElement>(null);
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
-  const [stream, setStream] = React.useState<MediaStream | null>(null);
   const [facingMode, setFacingMode] = React.useState<'environment' | 'user'>('environment');
   
-  const stopStream = React.useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-  }, [stream]);
-  
-  const getStream = React.useCallback(async (mode: 'environment' | 'user') => {
-      stopStream(); // Stop any existing stream
-      try {
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
-        setStream(newStream);
-        setHasCameraPermission(true);
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions. This feature may require a secure (HTTPS) connection.',
-        });
-      }
-  }, [stopStream, toast]);
-
   React.useEffect(() => {
+    let stream: MediaStream | null = null;
+    let isCancelled = false;
+    
+    const getCameraStream = async () => {
+        setHasCameraPermission(null); // Show loading state
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+            if (isCancelled) {
+              stream.getTracks().forEach(track => track.stop());
+              return;
+            }
+
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+            setHasCameraPermission(true);
+        } catch (error) {
+            console.error('Error accessing camera:', error);
+            if(isCancelled) return;
+
+            setHasCameraPermission(false);
+            toast({
+              variant: 'destructive',
+              title: 'Camera Access Denied',
+              description: 'Please enable camera permissions. This may require a secure (HTTPS) connection.',
+            });
+        }
+    };
+
     if (isOpen) {
-      getStream(facingMode);
-    } else {
-      stopStream();
-      setHasCameraPermission(null);
+      getCameraStream();
     }
 
     return () => {
-      stopStream();
+      isCancelled = true;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      if (videoRef.current) {
+        videoRef.current.srcObject = null;
+      }
+      setHasCameraPermission(null);
     }
-  }, [isOpen, facingMode, getStream, stopStream]);
-
-  React.useEffect(() => {
-    if (stream && videoRef.current) {
-        videoRef.current.srcObject = stream;
-    }
-  }, [stream]);
+  }, [isOpen, facingMode, toast]);
 
   const handleToggleCamera = () => {
     setFacingMode(prevMode => prevMode === 'environment' ? 'user' : 'environment');
