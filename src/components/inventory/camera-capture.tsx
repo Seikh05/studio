@@ -14,6 +14,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle, Camera, VideoOff, RefreshCcw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
+import { cn } from '@/lib/utils';
 
 interface CameraCaptureProps {
   isOpen: boolean;
