@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle, Camera, VideoOff } from 'lucide-react';
+import { LoaderCircle, Camera, VideoOff, RefreshCcw } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 
 interface CameraCaptureProps {
@@ -27,14 +27,19 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const [hasCameraPermission, setHasCameraPermission] = React.useState<boolean | null>(null);
   const [stream, setStream] = React.useState<MediaStream | null>(null);
+  const [facingMode, setFacingMode] = React.useState<'environment' | 'user'>('environment');
   
-  React.useEffect(() => {
-    
-    const enableStream = async () => {
-      if (!isOpen) return;
-
+  const stopStream = React.useCallback(() => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+  }, [stream]);
+  
+  const getStream = React.useCallback(async (mode: 'environment' | 'user') => {
+      stopStream(); // Stop any existing stream
       try {
-        const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: mode } });
         setStream(newStream);
         setHasCameraPermission(true);
       } catch (error) {
@@ -46,25 +51,20 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
           description: 'Please enable camera permissions. This feature may require a secure (HTTPS) connection.',
         });
       }
-    };
+  }, [stopStream, toast]);
 
+  React.useEffect(() => {
     if (isOpen) {
-      enableStream();
+      getStream(facingMode);
     } else {
-      // Cleanup stream when dialog is closed
-      if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-          setStream(null);
-          setHasCameraPermission(null);
-      }
+      stopStream();
+      setHasCameraPermission(null);
     }
 
     return () => {
-      if (stream) {
-          stream.getTracks().forEach(track => track.stop());
-      }
+      stopStream();
     }
-  }, [isOpen]);
+  }, [isOpen, facingMode, getStream, stopStream]);
 
   React.useEffect(() => {
     if (stream && videoRef.current) {
@@ -72,6 +72,9 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
     }
   }, [stream]);
 
+  const handleToggleCamera = () => {
+    setFacingMode(prevMode => prevMode === 'environment' ? 'user' : 'environment');
+  };
 
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
@@ -114,9 +117,27 @@ export function CameraCapture({ isOpen, onOpenChange, onCapture }: CameraCapture
             </Alert>
           )}
 
-          <div className={hasCameraPermission ? 'block' : 'hidden'}>
-              <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+          <div className="relative">
+              <video 
+                ref={videoRef} 
+                className={cn("w-full aspect-video rounded-md bg-muted", hasCameraPermission ? 'block' : 'hidden')} 
+                autoPlay 
+                muted 
+                playsInline 
+              />
               <canvas ref={canvasRef} className="hidden" />
+              {hasCameraPermission && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleToggleCamera}
+                    className="absolute bottom-2 right-2 rounded-full h-10 w-10"
+                  >
+                    <RefreshCcw className="h-5 w-5" />
+                    <span className="sr-only">Switch Camera</span>
+                  </Button>
+              )}
           </div>
         </div>
 
