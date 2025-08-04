@@ -5,8 +5,12 @@ import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { TransactionHistory } from '@/components/inventory/transaction-history';
 import type { ItemTransaction, InventoryItem, User } from '@/lib/types';
-import { Package, Users, ArrowRightLeft, LoaderCircle } from 'lucide-react';
+import { Package, Users, ArrowRightLeft, LoaderCircle, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format, isSameDay, parseISO } from 'date-fns';
 
 const INVENTORY_STORAGE_KEY = 'inventory-data';
 const USER_STORAGE_KEY = 'user-data';
@@ -21,8 +25,10 @@ export default function DashboardPage() {
     totalUsers: 0,
     totalTransactions: 0,
   });
-  const [recentTransactions, setRecentTransactions] = React.useState<ItemTransaction[]>([]);
+  const [allTransactions, setAllTransactions] = React.useState<ItemTransaction[]>([]);
+  const [filteredTransactions, setFilteredTransactions] = React.useState<ItemTransaction[]>([]);
   const [isClient, setIsClient] = React.useState(false);
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(undefined);
 
   const loadDashboardData = React.useCallback(() => {
     try {
@@ -39,7 +45,7 @@ export default function DashboardPage() {
       const totalUsers = users.length;
 
       // Transaction Stats & Recent Transactions
-      let allTransactions: ItemTransaction[] = [];
+      let transactions: ItemTransaction[] = [];
       inventory.forEach(item => {
         const transactionsKey = `${TRANSACTIONS_STORAGE_KEY_PREFIX}${item.id}`;
         const transactionsData = window.localStorage.getItem(transactionsKey);
@@ -47,21 +53,20 @@ export default function DashboardPage() {
           const itemTransactions: ItemTransaction[] = JSON.parse(transactionsData);
           // Add item info to each transaction for the recent activity log
           const transactionsWithItem = itemTransactions.map(t => ({...t, itemName: item.name, itemId: item.id}));
-          allTransactions.push(...transactionsWithItem);
+          transactions.push(...transactionsWithItem);
         }
       });
       
-      allTransactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      transactions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setAllTransactions(transactions);
 
       setStats({
         totalItems,
         lowStock,
         outOfStock,
         totalUsers,
-        totalTransactions: allTransactions.length,
+        totalTransactions: transactions.length,
       });
-
-      setRecentTransactions(allTransactions.slice(0, 5));
 
     } catch (error) {
       console.error("Failed to load dashboard data from localStorage", error);
@@ -85,6 +90,15 @@ export default function DashboardPage() {
        window.removeEventListener('logs-updated', handleStorageChange);
     }
   }, [loadDashboardData]);
+
+  React.useEffect(() => {
+    if (selectedDate) {
+        const dateFiltered = allTransactions.filter(t => isSameDay(parseISO(t.timestamp), selectedDate));
+        setFilteredTransactions(dateFiltered);
+    } else {
+        setFilteredTransactions(allTransactions.slice(0, 5));
+    }
+  }, [selectedDate, allTransactions]);
 
   if (!isClient) {
     return (
@@ -140,20 +154,47 @@ export default function DashboardPage() {
        </div>
       <Card>
         <CardHeader>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <CardTitle>Recent Activity</CardTitle>
                 <CardDescription>
-                  The latest transactions from across the inventory.
+                  {selectedDate ? `Showing transactions for ${format(selectedDate, 'PPP')}` : 'The latest transactions from across the inventory.'}
                 </CardDescription>
               </div>
-              <button onClick={() => router.push('/logs')} className="text-sm font-medium text-primary hover:underline">
-                View all
-              </button>
+              <div className="flex items-center gap-2">
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <Button
+                        variant={"outline"}
+                        className="w-full sm:w-56 justify-start text-left font-normal"
+                    >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : <span>Filter by date...</span>}
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                    <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+                {selectedDate && (
+                    <Button variant="ghost" size="icon" onClick={() => setSelectedDate(undefined)}>
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Reset</span>
+                    </Button>
+                )}
+                <Button onClick={() => router.push('/logs')} variant="link" className="text-sm font-medium text-primary">
+                    View all
+                </Button>
+              </div>
             </div>
         </CardHeader>
         <CardContent>
-          <TransactionHistory transactions={recentTransactions} />
+          <TransactionHistory transactions={filteredTransactions} />
         </CardContent>
       </Card>
     </div>
