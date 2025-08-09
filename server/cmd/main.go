@@ -19,13 +19,12 @@ func main() {
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/", homeHandler).Methods("GET")
+	r.HandleFunc("/", handlers.HomeHandler).Methods("GET")
 	r.HandleFunc("/health", handlers.HealthHandler).Methods("GET")
+	r.HandleFunc("/register",handlers.Register).Methods("POST")
 
 	fmt.Println("Server is starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
-func homeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Server is running on port 8080")
-}
+
