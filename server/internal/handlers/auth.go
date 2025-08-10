@@ -7,6 +7,7 @@ import (
 	"github.com/Seikh05/studio/internal/database"
 	"github.com/Seikh05/studio/internal/models"
 	"github.com/Seikh05/studio/internal/utils"
+	"github.com/go-playground/validator/v10"
 )
 
 type LoginRequest struct {
@@ -33,7 +34,6 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	if req.FullName == "" || req.Email == "" || req.Password == "" {
 		http.Error(w, "all fields are required", http.StatusBadRequest)
 		return
@@ -47,13 +47,11 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-
 	hashedPassword, err := utils.HashPassword(req.Password)
 	if err != nil {
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
-
 
 	newuser := models.User{
 		FullName: req.FullName,
@@ -80,4 +78,67 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(response)
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+
+    var req LoginRequest
+    err := json.NewDecoder(r.Body).Decode(&req)
+
+	if err != nil {
+		http.Error(w," unable to parse the requests",http.StatusBadRequest)
+		return
+	}
+
+
+
+	if req.Email == "" || req.Password == "" {
+       http.Error(w," provide the user credentials",http.StatusBadRequest)
+	   return
+	}
+
+	var validate = validator.New()
+
+	err = validate.Struct(req)
+
+	if err != nil {
+		http.Error(w, "invalid input :"+ err.Error(), http.StatusBadRequest)
+		return
+	}
+
+
+	var user models.User
+	result := database.DB.Where("email = ?", req.Email).First(&user)
+
+	if result.Error != nil {
+		http.Error(w, "user doesn't exist", http.StatusBadRequest)
+		return
+	}
+
+	 passwordMatched := utils.CheckPassword(user.Password, req.Password)
+	
+	if !passwordMatched {
+		http.Error(w, "Password not matched", http.StatusBadRequest)
+		return
+	}
+
+
+	token , err := utils.GenerateToken(user.ID)
+
+	if err != nil {
+		http.Error(w," unable to generate token ",http.StatusBadRequest)
+		return
+	}
+
+	response := AuthResponse{
+		Token: token,
+		User: user,
+		Message: "user logged in successfully",
+
+	}
+    
+	w.Header().Set("Content-Type","application-json")
+	w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(response)
+
 }

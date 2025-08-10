@@ -22,6 +22,7 @@ func main() {
 	r.HandleFunc("/", handlers.HomeHandler).Methods("GET")
 	r.HandleFunc("/health", handlers.HealthHandler).Methods("GET")
 	r.HandleFunc("/register",handlers.Register).Methods("POST")
+	r.HandleFunc("/login",handlers.Login).Methods("GET")
 
 	fmt.Println("Server is starting on port 8080...")
 	log.Fatal(http.ListenAndServe(":8080", r))
