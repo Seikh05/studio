@@ -15,7 +15,10 @@ func main() {
 
 	database.ConnectDB()
 
-	database.DB.AutoMigrate(&models.User{})
+	err := database.DB.AutoMigrate(&models.User{})
+	if err != nil {
+		log.Fatalf("Error running automigrate for model: %v", err)
+	}
 
 	r := mux.NewRouter()
 
