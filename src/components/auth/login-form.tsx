@@ -46,73 +46,57 @@ export function LoginForm() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true)
     
-    setTimeout(() => {
-        let allUsers: User[] = [];
-        try {
-            const storedData = window.localStorage.getItem(USER_STORAGE_KEY);
-            if (storedData) {
-                allUsers = JSON.parse(storedData);
-            } else {
-                // If no data in local storage, use the initial hardcoded list
-                allUsers = initialUsers;
-                window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(initialUsers));
-            }
-        } catch (error) {
-            console.error("Failed to process user data from localStorage", error);
-            allUsers = initialUsers; // Fallback to initial users
+    try {
+      // Call your Go backend API
+      const response = await fetch('http://localhost:8080/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: values.email,
+          password: values.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Login successful
+        toast({
+          title: "Login Successful",
+          description: "Welcome back!",
+        })
+
+        // Store the JWT token and user info
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token)
+          localStorage.setItem('user_data', JSON.stringify(data.user))
         }
 
-        const user = allUsers.find(u => u.email === values.email);
-
-        if (user && user.password === values.password) {
-            if(user.role === 'New User') {
-                toast({
-                    variant: 'destructive',
-                    title: 'Login Failed',
-                    description: 'Your account is pending admin approval. Please check back later.'
-                });
-                setIsLoading(false);
-                return;
-            }
-            
-            try {
-                const sessionUser = { ...user };
-                delete sessionUser.password;
-                
-                window.localStorage.setItem(LOGGED_IN_USER_KEY, JSON.stringify(sessionUser));
-                
-                if (user.role === 'General Member') {
-                    router.push("/inventory")
-                } else {
-                    router.push("/dashboard")
-                }
-            } catch (error) {
-                console.error("Failed to save user session", error);
-                
-                let description = "Could not create user session. Please try again."
-                if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-                    description = "Your browser storage is full. Please clear some space and try again."
-                }
-
-                toast({
-                    variant: "destructive",
-                    title: "Login Error",
-                    description: description,
-                })
-                setIsLoading(false)
-            }
-        } else {
-            toast({
-            variant: "destructive",
-            title: "Login Failed",
-            description: "Invalid email or password. Please try again.",
-            })
-            setIsLoading(false)
-        }
-    }, 500); // Reduced timeout
+        // Redirect based on user role or just go to dashboard
+        router.push("/dashboard")
+      } else {
+        // Login failed
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: data.message || "Invalid email or password.",
+        })
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description: "Could not connect to server. Please try again.",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassword = () => {

@@ -77,7 +77,12 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+
+	if err != nil {
+		http.Error(w," failed to encode response", http.StatusInternalServerError)
+	}
+
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -139,6 +144,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
     
 	w.Header().Set("Content-Type","application-json")
 	w.WriteHeader(http.StatusCreated)
-    json.NewEncoder(w).Encode(response)
+    err = json.NewEncoder(w).Encode(response)
+
+	if err != nil {
+		http.Error(w," failed to encode the response ", http.StatusInternalServerError)
+	}
 
 }
